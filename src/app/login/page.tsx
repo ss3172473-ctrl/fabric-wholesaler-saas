@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
 // ... (SubmitButton code remains same)
+import { login } from './actions';
 
 function LoginForm() {
     const searchParams = useSearchParams();
