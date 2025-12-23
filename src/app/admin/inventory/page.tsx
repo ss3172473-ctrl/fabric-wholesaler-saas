@@ -96,20 +96,20 @@ export default function InventoryPage() {
     return (
         <Container size="xl" py="xl">
             <Group justify="space-between" mb="lg">
-                <Title order={2}>Inventory & Rolls</Title>
-                <Button onClick={openProductModal} leftSection={<IconPlus size={16} />}>New Product</Button>
+                <Title order={2} c="navy.9">재고 관리 (원단 & 롤)</Title>
+                <Button onClick={openProductModal} leftSection={<IconPlus size={16} />} color="navy">신규 원단 등록</Button>
             </Group>
 
-            <Card withBorder radius="md" p="md">
-                <Table stickyHeader>
-                    <Table.Thead>
+            <Card withBorder radius="md" p="md" shadow="sm">
+                <Table stickyHeader verticalSpacing="sm" highlightOnHover>
+                    <Table.Thead bg="gray.0">
                         <Table.Tr>
                             <Table.Th w={50}></Table.Th>
-                            <Table.Th>Product Name</Table.Th>
-                            <Table.Th>Color</Table.Th>
-                            <Table.Th>Price / Yd</Table.Th>
-                            <Table.Th>Total Stock</Table.Th>
-                            <Table.Th style={{ textAlign: 'right' }}>Action</Table.Th>
+                            <Table.Th>상품명 (품목)</Table.Th>
+                            <Table.Th>색상/패턴</Table.Th>
+                            <Table.Th>단가 (1야드)</Table.Th>
+                            <Table.Th>총 재고</Table.Th>
+                            <Table.Th style={{ textAlign: 'right' }}>관리</Table.Th>
                         </Table.Tr>
                     </Table.Thead>
                     <Table.Tbody>
@@ -122,22 +122,22 @@ export default function InventoryPage() {
                                 <>
                                     <Table.Tr key={p.id} bg={isExpanded ? 'var(--mantine-color-gray-0)' : undefined}>
                                         <Table.Td>
-                                            <ActionIcon variant="subtle" size="sm" onClick={() => setExpandedProduct(isExpanded ? null : p.id)}>
+                                            <ActionIcon variant="subtle" color="gray" size="sm" onClick={() => setExpandedProduct(isExpanded ? null : p.id)}>
                                                 {isExpanded ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
                                             </ActionIcon>
                                         </Table.Td>
-                                        <Table.Td fw={500}>{p.name}</Table.Td>
+                                        <Table.Td fw={600} c="navy.9">{p.name}</Table.Td>
                                         <Table.Td>{p.color}</Table.Td>
-                                        <Table.Td>{p.price_per_yard.toLocaleString()} ₩</Table.Td>
+                                        <Table.Td fw={500}>{p.price_per_yard.toLocaleString()} 원</Table.Td>
                                         <Table.Td>
-                                            <Badge color={totalStock > 0 ? 'blue' : 'gray'}>
+                                            <Badge color={totalStock > 0 ? 'teal' : 'gray'} variant="light" size="lg">
                                                 {totalStock} yds
                                             </Badge>
-                                            <Text span size="xs" c="dimmed" ml="xs">({productRolls.length} rolls)</Text>
+                                            <Text span size="xs" c="dimmed" ml="xs">({productRolls.length} 롤)</Text>
                                         </Table.Td>
                                         <Table.Td style={{ textAlign: 'right' }}>
-                                            <Button size="xs" variant="light" onClick={() => openAddRoll(p.id)}>
-                                                + Add Roll
+                                            <Button size="xs" variant="outline" color="navy" onClick={() => openAddRoll(p.id)}>
+                                                + 롤 입고
                                             </Button>
                                         </Table.Td>
                                     </Table.Tr>
@@ -145,17 +145,19 @@ export default function InventoryPage() {
                                     {isExpanded && (
                                         <Table.Tr>
                                             <Table.Td colSpan={6} p={0}>
-                                                <div style={{ padding: '10px 20px', backgroundColor: 'var(--mantine-color-gray-0)' }}>
-                                                    <Title order={6} mb="xs">Rolls Inventory</Title>
+                                                <div style={{ padding: '15px 30px', backgroundColor: 'var(--mantine-color-gray-0)' }}>
+                                                    <Title order={6} mb="sm" c="dimmed">개별 롤(Roll) 재고 상세</Title>
                                                     {productRolls.length === 0 ? (
-                                                        <Text c="dimmed" size="sm">No rolls registered. Add one to start selling.</Text>
+                                                        <Text c="dimmed" size="sm">등록된 롤이 없습니다. 입고 버튼을 눌러 재고를 추가하세요.</Text>
                                                     ) : (
                                                         <Group gap="sm">
                                                             {productRolls.map(roll => (
-                                                                <Card key={roll.id} shadow="sm" padding="xs" radius="md" withBorder w={120}>
-                                                                    <Text fw={700} size="sm">{roll.roll_label}</Text>
+                                                                <Card key={roll.id} shadow="sm" padding="xs" radius="md" withBorder w={140} bg="white">
+                                                                    <Text fw={700} size="sm" c="navy.9">{roll.roll_label}</Text>
                                                                     <Text size="xs" c="dimmed">{Number(roll.quantity_yards)} yds</Text>
-                                                                    <Badge size="xs" color={roll.status === 'active' ? 'teal' : 'gray'} mt={5}>{roll.status}</Badge>
+                                                                    <Badge size="xs" color={roll.status === 'active' ? 'teal' : 'gray'} mt={5} variant="dot">
+                                                                        {roll.status === 'active' ? '판매가능' : '소진됨'}
+                                                                    </Badge>
                                                                 </Card>
                                                             ))}
                                                         </Group>
@@ -172,23 +174,23 @@ export default function InventoryPage() {
             </Card>
 
             {/* Create Product Modal */}
-            <Modal opened={productModalOpen} onClose={closeProductModal} title="Register New Fabric">
-                <TextInput label="Fabric Name" placeholder="e.g. Linen 100%" required mb="sm"
+            <Modal opened={productModalOpen} onClose={closeProductModal} title="신규 원단 등록" centered>
+                <TextInput label="원단명 (품명)" placeholder="예: 린넨 100% 화이트" required mb="sm"
                     value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.currentTarget.value })} />
-                <TextInput label="Color / Pattern" placeholder="e.g. Beige Check" required mb="sm"
+                <TextInput label="색상 / 패턴" placeholder="예: 베이지 체크" required mb="sm"
                     value={productForm.color} onChange={(e) => setProductForm({ ...productForm, color: e.currentTarget.value })} />
-                <NumberInput label="Base Price (per yard)" required mb="lg"
+                <NumberInput label="단가 (1야드 기준)" required mb="lg" suffix=" 원" hideControls
                     value={productForm.price} onChange={(v) => setProductForm({ ...productForm, price: Number(v) })} />
-                <Button fullWidth onClick={handleCreateProduct} loading={loading}>Save Product</Button>
+                <Button fullWidth onClick={handleCreateProduct} loading={loading} color="navy">원단 저장</Button>
             </Modal>
 
             {/* Add Roll Modal */}
-            <Modal opened={rollModalOpen} onClose={closeRollModal} title="Stock In (Add Roll)">
-                <TextInput label="Roll Label/Number" placeholder="e.g. #A-102" required mb="sm"
+            <Modal opened={rollModalOpen} onClose={closeRollModal} title="롤 입고 (재고 추가)" centered>
+                <TextInput label="롤 번호 / 라벨" placeholder="예: #A-101" required mb="sm"
                     value={rollForm.label} onChange={(e) => setRollForm({ ...rollForm, label: e.currentTarget.value })} />
-                <NumberInput label="Yards Amount" placeholder="50" required mb="lg"
+                <NumberInput label="입고 수량 (야드)" placeholder="50" required mb="lg" suffix=" yds"
                     value={rollForm.quantity} onChange={(v) => setRollForm({ ...rollForm, quantity: Number(v) })} />
-                <Button fullWidth onClick={handleAddRoll} loading={loading}>confirm Stock In</Button>
+                <Button fullWidth onClick={handleAddRoll} loading={loading} color="navy">입고 확인</Button>
             </Modal>
         </Container>
     );

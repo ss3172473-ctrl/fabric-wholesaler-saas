@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Container, Title, Select, Table, Button, Group, Card, Text } from '@mantine/core';
 import { createClient } from '@/utils/supabase/client';
 import * as XLSX from 'xlsx';
+import { IconFileSpreadsheet } from '@tabler/icons-react';
 
 interface SettlementData {
     user_id: string;
@@ -81,9 +82,10 @@ export default function SettlementPage() {
     return (
         <Container size="xl" py="xl">
             <Group justify="space-between" mb="xl">
-                <Title order={2}>Monthly Settlement</Title>
+                <Title order={2} c="navy.9">월말 정산 (거래 명세)</Title>
                 <Group>
                     <Select
+                        placeholder="날짜 선택"
                         value={month}
                         onChange={(v) => setMonth(v || '')}
                         data={[
@@ -92,34 +94,39 @@ export default function SettlementPage() {
                             '2024-09', '2024-10', '2024-11', '2024-12',
                             '2025-01', '2025-02', '2025-03'
                         ]}
+                        allowDeselect={false}
+                        w={150}
                     />
-                    <Button color="green" onClick={exportToExcel}>Export Excel</Button>
+                    <Button color="green" onClick={exportToExcel} leftSection={<IconFileSpreadsheet size={18} />}>
+                        엑셀 다운로드
+                    </Button>
                 </Group>
             </Group>
 
-            <Card withBorder>
-                <Table striped highlightOnHover>
-                    <Table.Thead>
+            <Card withBorder radius="md" shadow="sm">
+                <Table striped highlightOnHover withTableBorder>
+                    <Table.Thead bg="gray.0">
                         <Table.Tr>
-                            <Table.Th>Customer</Table.Th>
-                            <Table.Th>Total Orders</Table.Th>
-                            <Table.Th>Total Amount</Table.Th>
-                            <Table.Th>Action</Table.Th>
+                            <Table.Th>거래처명</Table.Th>
+                            <Table.Th>총 주문 건수</Table.Th>
+                            <Table.Th>총 거래 금액</Table.Th>
+                            <Table.Th>관리</Table.Th>
                         </Table.Tr>
                     </Table.Thead>
                     <Table.Tbody>
                         {data.map((row) => (
                             <Table.Tr key={row.user_id}>
-                                <Table.Td fw={500}>{row.business_name}</Table.Td>
-                                <Table.Td>{row.total_orders}</Table.Td>
-                                <Table.Td>{row.total_amount.toLocaleString()} ₩</Table.Td>
+                                <Table.Td fw={600} c="navy.9">{row.business_name}</Table.Td>
+                                <Table.Td>{row.total_orders} 건</Table.Td>
+                                <Table.Td>{row.total_amount.toLocaleString()} 원</Table.Td>
                                 <Table.Td>
-                                    <Button variant="subtle" size="xs">Detail</Button>
+                                    <Button variant="subtle" size="xs" color="gray">상세 내역</Button>
                                 </Table.Td>
                             </Table.Tr>
                         ))}
                     </Table.Tbody>
                 </Table>
+                {data.length === 0 && <Text ta="center" py="xl" c="dimmed">해당 월의 거래 내역이 없습니다.</Text>}
             </Card>
         </Container>
     );

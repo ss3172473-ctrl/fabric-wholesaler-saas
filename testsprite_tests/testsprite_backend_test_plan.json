@@ -1,0 +1,17 @@
+[
+  {
+    "id": "TC001",
+    "title": "user login with valid credentials",
+    "description": "Test the /login endpoint to verify that a user can successfully authenticate using valid email and password credentials via Supabase Auth."
+  },
+  {
+    "id": "TC002",
+    "title": "admin create customer with valid data",
+    "description": "Test the /admin/customers/create endpoint to ensure that an admin can create a new customer account by providing all required fields including email, password, name, company, and phone."
+  },
+  {
+    "id": "TC003",
+    "title": "customer place order with multiple fabric rolls",
+    "description": "Test the /shop/order endpoint to verify that a customer can place an order containing multiple fabric roll items, each with productId, quantity, and price, and optionally include a note."
+  }
+]

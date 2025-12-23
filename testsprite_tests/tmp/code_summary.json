@@ -1,0 +1,135 @@
+{
+    "tech_stack": [
+        "TypeScript",
+        "Next.js",
+        "Supabase",
+        "Mantine UI"
+    ],
+    "features": [
+        {
+            "name": "User Login",
+            "description": "Authenticates a user using email and password via Supabase Auth.",
+            "files": [
+                "src/app/login/actions.ts"
+            ],
+            "api_doc": {
+                "openapi": "3.0.0",
+                "paths": {
+                    "/login": {
+                        "post": {
+                            "summary": "Login User",
+                            "requestBody": {
+                                "content": {
+                                    "multipart/form-data": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "email": {
+                                                    "type": "string"
+                                                },
+                                                "password": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "Create Customer",
+            "description": "Admin creates a new customer account using service role.",
+            "files": [
+                "src/app/admin/customers/actions.ts"
+            ],
+            "api_doc": {
+                "openapi": "3.0.0",
+                "paths": {
+                    "/admin/customers/create": {
+                        "post": {
+                            "summary": "Create Customer",
+                            "requestBody": {
+                                "content": {
+                                    "multipart/form-data": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "email": {
+                                                    "type": "string"
+                                                },
+                                                "password": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "company": {
+                                                    "type": "string"
+                                                },
+                                                "phone": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "Create Order",
+            "description": "Customer places an order for multiple fabric rolls.",
+            "files": [
+                "src/app/shop/actions.ts"
+            ],
+            "api_doc": {
+                "openapi": "3.0.0",
+                "paths": {
+                    "/shop/order": {
+                        "post": {
+                            "summary": "Create Order",
+                            "requestBody": {
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "productId": {
+                                                                "type": "string"
+                                                            },
+                                                            "quantity": {
+                                                                "type": "number"
+                                                            },
+                                                            "price": {
+                                                                "type": "number"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "note": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
