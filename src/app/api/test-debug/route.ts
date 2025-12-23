@@ -1,29 +1,40 @@
-
 import { type NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
-import { createAdminClient } from '@/utils/supabase/admin';
+import { createClient } from '@supabase/supabase-js';
+
+// Stateless client for debugging/testing only
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
+);
 
 export async function POST(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const action = searchParams.get('action');
     const body = await request.json().catch(() => ({}));
 
-    const supabase = await createClient();
-    const supabaseAdmin = createAdminClient();
-
     try {
         // 1. LOGIN TEST
         if (action === 'login') {
             const { email, password } = body;
+            // Use signInWithPassword
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) return NextResponse.json({ success: false, error: error.message }, { status: 401 });
+
+            if (error) {
+                return NextResponse.json({ success: false, error: error.message }, { status: 401 });
+            }
             return NextResponse.json({ success: true, user: data.user.email });
         }
 
         // 2. CREATE CUSTOMER TEST (Admin)
         if (action === 'create_customer') {
             const { email, password, business_name } = body;
-            const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+            const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
                 email,
                 password,
                 email_confirm: true,
@@ -31,12 +42,13 @@ export async function POST(request: NextRequest) {
             });
             if (authError) throw authError;
 
-            const { error: dbError } = await supabaseAdmin.from('users').insert({
+            const { error: dbError } = await supabase.from('users').insert({
                 id: authUser.user.id,
                 email,
                 business_name,
                 role: 'customer'
             });
+            console.log("DB Insert Error:", dbError);
             if (dbError) throw dbError;
 
             return NextResponse.json({ success: true, userId: authUser.user.id });
@@ -52,6 +64,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 
     } catch (e: any) {
+        console.error("API Error:", e);
         return NextResponse.json({ success: false, error: e.message || 'Unknown error' }, { status: 500 });
     }
 }
