@@ -22,7 +22,14 @@ export async function login(formData: FormData) {
 
     if (error) {
         console.error("Login Error:", error.message);
-        return { error: `로그인 실패: ${error.message}` };
+
+        // Debugging for Vercel
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const debugInfo = url
+            ? `(URL Configured: Yes, Starts with https: ${url.startsWith('https')})`
+            : `(URL Configured: NO - Check Vercel Env Vars)`;
+
+        return { error: `로그인 실패: ${error.message} ${debugInfo}` };
     }
 
     revalidatePath('/', 'layout');
