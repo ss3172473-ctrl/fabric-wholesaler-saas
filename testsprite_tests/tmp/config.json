@@ -8,10 +8,10 @@
     "projectName": "a",
     "projectPath": "/Users/leesungjun/영진 장부처리 자동화",
     "testIds": [],
-    "additionalInstruction": "Generate 4 Python tests using 'requests' to hit the debug API, AND use the Supabase Python Client for verification if needed.\n\nAPI Endpoint Base: http://localhost:3000/api/test-debug\n\nCredentials for Verification:\n- URL: https://asdegiubqpjnxebtznot.supabase.co\n- Service Key: sb_secret_Wgj-2IcFcDs4O5WtgTB5HQ_kNa2IdPv\n\nTest Cases:\n1. User Login: POST ?action=login with email '35081363@naver.com' / 'qwas1122**'. Assert success=true.\n2. Login Failure: POST ?action=login with wrong password. Assert success=false.\n3. Inventory Check: POST ?action=check_inventory. Assert success=true.\n4. Create Customer: POST ?action=create_customer with unique email. Assert success=true.\n\nEnsure tests handle JSON responses correctly.",
+    "additionalInstruction": "Run python tests using ONLY verify_user.ts logic equivalents (stateless requests).\nTarget: http://localhost:3000/api/test-debug\n\n1. Login Success: POST /api/test-debug?action=login (correct creds).\n2. Login Fail: POST /api/test-debug?action=login (wrong pwd).\n3. Inventory: POST /api/test-debug?action=check_inventory.\n4. Customer: POST /api/test-debug?action=create_customer (random email).\n\nDo NOT use 'supabase' package. Use 'requests'.",
     "envs": {
       "API_KEY": "sk-user-x7tVJz86-yopFNBLIlZIxH-S2Zu6nwKPWBBH9kIqGTZxQ5WZYfL6j3oJ8cLoNXfQIH1TMIjax_nPskbbrbosjd5bnrkS56Z_NGX82g_ZVWR0PJm7ENU1GFeBK-29hSS1SDI"
     }
   },
-  "proxy": "http://463d3f1b-3dfe-4e7f-a80f-fab04693074a:2Ef4JR5l19WUU4uWl2eaas3bPeQoEMHu@tun.testsprite.com:8080"
+  "proxy": "http://3ccd3f8f-3b13-478a-9ee3-e6992d9c1cfa:hr0fJrXVkTgnAwygRh6y48kmA5tuBL6o@tun.testsprite.com:8080"
 }

@@ -16,38 +16,13 @@
 - **Test Name:** user login with valid credentials
 - **Test Code:** [TC001_user_login_with_valid_credentials.py](./TC001_user_login_with_valid_credentials.py)
 - **Test Error:** Traceback (most recent call last):
-  File "/var/task/requests/models.py", line 974, in json
-    return complexjson.loads(self.text, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/var/lang/lib/python3.12/site-packages/simplejson/__init__.py", line 514, in loads
-    return _default_decoder.decode(s)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/var/lang/lib/python3.12/site-packages/simplejson/decoder.py", line 386, in decode
-    obj, end = self.raw_decode(s)
-               ^^^^^^^^^^^^^^^^^^
-  File "/var/lang/lib/python3.12/site-packages/simplejson/decoder.py", line 416, in raw_decode
-    return self.scan_once(s, idx=_w(s, idx).end())
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "<string>", line 19, in test_user_login_with_valid_credentials
-  File "/var/task/requests/models.py", line 978, in json
-    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
-requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
   File "/var/task/handler.py", line 258, in run_with_retry
     exec(code, exec_env)
-  File "<string>", line 26, in <module>
-  File "<string>", line 21, in test_user_login_with_valid_credentials
-AssertionError: Response is not valid JSON: Expecting value: line 1 column 1 (char 0)
+  File "<string>", line 54, in <module>
+  File "<string>", line 22, in test_user_login_with_valid_credentials
+AssertionError: Expected 200, got 500
 
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/0aaad493-ebeb-4094-8e7b-6781acb0c641/f8333c34-e0a0-42fc-8093-8e466f923ec6
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8efeaae9-f469-4345-90f2-1c4ad05b3fc3/57df6d1c-8df5-4f7c-80ba-25c5b219c110
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
@@ -58,10 +33,11 @@ AssertionError: Response is not valid JSON: Expecting value: line 1 column 1 (ch
 - **Test Error:** Traceback (most recent call last):
   File "/var/task/handler.py", line 258, in run_with_retry
     exec(code, exec_env)
-  File "<string>", line 3, in <module>
-ModuleNotFoundError: No module named 'supabase'
+  File "<string>", line 50, in <module>
+  File "<string>", line 27, in test_admin_create_customer_with_valid_data
+AssertionError: Login failed with status 500
 
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/0aaad493-ebeb-4094-8e7b-6781acb0c641/f74470e0-c760-4969-82f0-9721d0328296
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8efeaae9-f469-4345-90f2-1c4ad05b3fc3/6899f4cf-1cab-4987-87c9-edca4785ff43
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---
@@ -72,10 +48,11 @@ ModuleNotFoundError: No module named 'supabase'
 - **Test Error:** Traceback (most recent call last):
   File "/var/task/handler.py", line 258, in run_with_retry
     exec(code, exec_env)
-  File "<string>", line 2, in <module>
-ModuleNotFoundError: No module named 'supabase'
+  File "<string>", line 45, in <module>
+  File "<string>", line 39, in test_customer_place_order_with_multiple_fabric_rolls
+AssertionError: Order placement failed with status 404
 
-- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/0aaad493-ebeb-4094-8e7b-6781acb0c641/6f5c5c25-dadc-4411-a26f-a689e3f614ca
+- **Test Visualization and Result:** https://www.testsprite.com/dashboard/mcp/tests/8efeaae9-f469-4345-90f2-1c4ad05b3fc3/a955bf0d-1c26-47b7-b48b-4c982cc83226
 - **Status:** ❌ Failed
 - **Analysis / Findings:** {{TODO:AI_ANALYSIS}}.
 ---

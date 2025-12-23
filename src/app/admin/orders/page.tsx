@@ -27,17 +27,23 @@ interface Order {
     }[];
 }
 
+import * as XLSX from 'xlsx';
+import { IconFileSpreadsheet, IconTruckDelivery, IconCheck } from '@tabler/icons-react';
+
 export default function AdminOrdersPage() {
     const supabase = createClient();
     const [orders, setOrders] = useState<Order[]>([]);
-    const [priceMap, setPriceMap] = useState<Record<string, number>>({}); // itemId -> price
+    const [priceMap, setPriceMap] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        async function fetchOrders() {
-            const { data, error } = await supabase
-                .from('orders')
-                .select(`
+        fetchOrders();
+    }, []);
+
+    async function fetchOrders() {
+        const { data, error } = await supabase
+            .from('orders')
+            .select(`
                 *,
                 users (business_name, phone),
                 order_items (
@@ -45,47 +51,31 @@ export default function AdminOrdersPage() {
                     products (name, color, price_per_yard)
                 )
             `)
-                .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Supabase fetch error:', error);
-                return;
-            }
-
-            if (data) {
-                console.log('Fetched orders data:', JSON.stringify(data, null, 2));
-                try {
-                    setOrders(data as any);
-                    // Initialize price map with current or base product prices
-                    const map: Record<string, number> = {};
-                    data.forEach((o: any) => {
-                        if (o && o.order_items) {
-                            o.order_items.forEach((item: any) => {
-                                if (item) {
-                                    // Use existing price if set (>0), otherwise product base price
-                                    map[item.id] = (item.price_at_moment || 0) > 0 ? item.price_at_moment : (item.products?.price_per_yard || 0);
-                                }
-                            });
-                        }
-                    });
-                    setPriceMap(map);
-                } catch (e) {
-                    console.error('Error initializing price map:', e);
-                }
-            }
+        if (data) {
+            setOrders(data as any);
+            const map: Record<string, number> = {};
+            data.forEach((o: any) => {
+                (o.order_items || []).forEach((item: any) => {
+                    map[item.id] = (item.price_at_moment || 0) > 0 ? item.price_at_moment : (item.products?.price_per_yard || 0);
+                });
+            });
+            setPriceMap(map);
         }
-        fetchOrders();
-    }, []);
+    }
 
     const updateStatus = async (orderId: string, status: string) => {
+        setLoading(true);
         const { error } = await supabase.from('orders').update({ status }).eq('id', orderId);
         if (!error) {
-            setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+            await fetchOrders();
         }
+        setLoading(false);
     };
 
     const handleApprove = async (order: Order) => {
-        if (!confirm('설정된 단가로 주문을 승인하시겠습니까?')) return;
+        if (!confirm('설정된 단가로 주문을 승인하시겠습니까? (재고가 자동 차감됩니다)')) return;
         setLoading(true);
 
         const itemsToUpdate = (order?.order_items || []).map(item => ({
@@ -93,130 +83,153 @@ export default function AdminOrdersPage() {
             price: priceMap[item.id] || 0
         }));
 
-        const result = await approveOrder(order.id, itemsToUpdate);
-
-        if (result?.success) {
-            alert('주문이 승인되었습니다.');
-            // Refresh local state roughly or reload
-            window.location.reload();
-        } else {
-            alert('오류 발생: ' + result?.error);
+        try {
+            const result = await approveOrder(order.id, itemsToUpdate);
+            if (result?.success) {
+                alert('주문이 승인되었습니다.');
+                await fetchOrders();
+            } else {
+                alert('오류 발생: ' + result?.error);
+            }
+        } catch (e: any) {
+            alert('승인 중 오류: ' + e.message);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
+    };
+
+    const exportToExcel = () => {
+        const exportData = orders.flatMap(order =>
+            (order.order_items || []).map(item => ({
+                '주문번호': (order as any).order_number || '-',
+                '주문일시': formatKSTDate(order.created_at),
+                '거래처': order.users?.business_name || '-',
+                '상품명': item.products?.name || '-',
+                '색상': item.products?.color || '-',
+                '수량(야드)': item.quantity_yards,
+                '단가': (order.status === 'pending' ? (priceMap[item.id] || 0) : item.price_at_moment),
+                '금액': item.quantity_yards * (order.status === 'pending' ? (priceMap[item.id] || 0) : item.price_at_moment),
+                '상태': order.status,
+                '메모': order.note
+            }))
+        );
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Orders");
+        XLSX.writeFile(wb, `Orders_${new Date().toISOString().slice(0, 10)}.xlsx`);
     };
 
     const formatKSTDate = (dateStr: string) => {
         if (!dateStr) return '-';
-        try {
-            return new Date(dateStr).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-        } catch (e) {
-            return '-';
+        return new Date(dateStr).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+    };
+
+    const getStatusInfo = (status: string) => {
+        switch (status) {
+            case 'pending': return { label: '견적대기', color: 'yellow' };
+            case 'approved': return { label: '승인완료', color: 'teal' };
+            case 'preparing': return { label: '출고준비', color: 'blue' };
+            case 'shipped': return { label: '출고완료', color: 'gray' };
+            case 'cancelled': return { label: '주문취소', color: 'red' };
+            default: return { label: status, color: 'gray' };
         }
     };
 
     return (
         <Container size="xl" py="xl">
             <LoadingOverlay visible={loading} />
-            <Title order={2} mb="lg" c="navy.9">주문 관리 (견적 승인)</Title>
+            <Group justify="space-between" mb="lg">
+                <Title order={2} c="navy.9">주문 관리 (전체 내역)</Title>
+                <Button color="green" leftSection={<IconFileSpreadsheet size={18} />} onClick={exportToExcel}>
+                    엑셀 다운로드
+                </Button>
+            </Group>
 
-            <Accordion variant="separated" radius="md">
-                {(orders || []).filter((o: any) => o && o.id).map((order: any) => {
-                    const orderId = String(order.id);
-                    const bizName = order.users?.business_name || '알 수 없음';
-                    const createdAt = order.created_at ? formatKSTDate(order.created_at) : '-';
-                    const status = order.status || 'unknown';
-                    const totalPrice = Number(order.total_price || 0);
-                    const note = order.note || '없음';
-                    const items = order.order_items || [];
+            <Card withBorder radius="md" p={0}>
+                <Table verticalSpacing="sm" highlightOnHover>
+                    <Table.Thead bg="gray.0">
+                        <Table.Tr>
+                            <Table.Th>주문번호 / 일시</Table.Th>
+                            <Table.Th>거래처</Table.Th>
+                            <Table.Th>주문 내용</Table.Th>
+                            <Table.Th>총액</Table.Th>
+                            <Table.Th>상태</Table.Th>
+                            <Table.Th>액션</Table.Th>
+                        </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                        {orders.map((order: any) => {
+                            const statusInfo = getStatusInfo(order.status);
+                            const items = order.order_items || [];
 
-                    return (
-                        <Accordion.Item key={orderId} value={orderId} mb="sm" bg="white" style={{ border: '1px solid #eee' }}>
-                            <Accordion.Control>
-                                <Group justify="space-between" pr="md" wrap="nowrap">
-                                    <div style={{ flex: 1 }}>
-                                        <Text fw={700} size="lg" c="navy.9">{bizName}</Text>
-                                        <Text size="sm" c="dimmed">{createdAt}</Text>
-                                    </div>
-                                    <Group wrap="nowrap" gap="xl">
-                                        <Text fw={700} c="navy.9">
-                                            {status === 'pending' ? '견적 대기중' : `${totalPrice.toLocaleString()} 원`}
-                                        </Text>
-                                        <Badge size="lg" color={
-                                            status === 'pending' ? 'yellow' :
-                                                status === 'approved' ? 'teal' : 'gray'
-                                        }>
-                                            {status === 'pending' ? '접수대기' :
-                                                status === 'approved' ? '승인완료' : status}
-                                        </Badge>
-                                    </Group>
-                                </Group>
-                            </Accordion.Control>
-                            <Accordion.Panel>
-                                <Card withBorder bg="gray.0" mb="md" radius="md">
-                                    <Text size="sm" mb="sm" fw={500}>📝 주문 메모: {note}</Text>
-                                    <Table bg="white" withTableBorder>
-                                        <Table.Thead>
-                                            <Table.Tr>
-                                                <Table.Th>상품명</Table.Th>
-                                                <Table.Th>색상/패턴</Table.Th>
-                                                <Table.Th>주문수량 (야드)</Table.Th>
-                                                <Table.Th style={{ width: 150 }}>확정 단가 (원)</Table.Th>
-                                                <Table.Th>합계</Table.Th>
-                                            </Table.Tr>
-                                        </Table.Thead>
-                                        <Table.Tbody>
-                                            {(items || []).map((item: any) => {
-                                                if (!item) return null;
-                                                const currentPrice = priceMap[item.id] || 0;
-                                                const qty = Number(item.quantity_yards || 0);
-                                                const fixedPrice = Number(item.price_at_moment || 0);
-                                                const prodName = item.products?.name || '-';
-                                                const prodColor = item.products?.color || '-';
-
-                                                return (
-                                                    <Table.Tr key={item.id}>
-                                                        <Table.Td>{prodName}</Table.Td>
-                                                        <Table.Td>{prodColor}</Table.Td>
-                                                        <Table.Td>{qty} yds</Table.Td>
-                                                        <Table.Td>
-                                                            {status === 'pending' ? (
-                                                                <NumberInput
-                                                                    value={currentPrice}
-                                                                    onChange={(v) => setPriceMap(prev => ({ ...prev, [item.id]: Number(v) }))}
-                                                                    min={0} step={100}
-                                                                    hideControls
-                                                                    size="xs"
-                                                                />
-                                                            ) : (
-                                                                `${fixedPrice.toLocaleString()} 원`
-                                                            )}
-                                                        </Table.Td>
-                                                        <Table.Td fw={600}>
-                                                            {(qty * (status === 'pending' ? currentPrice : fixedPrice)).toLocaleString()} 원
-                                                        </Table.Td>
-                                                    </Table.Tr>
-                                                );
-                                            })}
-                                        </Table.Tbody>
-                                    </Table>
-
-                                    <Group justify="flex-end" mt="md">
-                                        <Button size="sm" variant="outline" color="red" onClick={() => updateStatus(order.id, 'cancelled')}>
-                                            주문 취소
-                                        </Button>
-                                        {status === 'pending' && (
-                                            <Button size="sm" color="navy" onClick={() => handleApprove(order)}>
-                                                ✅ 단가 확정 및 승인
-                                            </Button>
-                                        )}
-                                    </Group>
-                                </Card>
-                            </Accordion.Panel>
-                        </Accordion.Item>
-                    );
-                })}
-            </Accordion>
-            {(!orders || orders.length === 0) && <Text ta="center" c="dimmed" mt="xl">들어온 주문 내역이 없습니다.</Text>}
+                            return (
+                                <Table.Tr key={order.id}>
+                                    <Table.Td>
+                                        <Text fw={700} size="sm">{order.order_number || '-'}</Text>
+                                        <Text size="xs" c="dimmed">{formatKSTDate(order.created_at)}</Text>
+                                    </Table.Td>
+                                    <Table.Td>
+                                        <Text fw={600}>{order.users?.business_name}</Text>
+                                        <Text size="xs" c="dimmed">{order.users?.phone}</Text>
+                                    </Table.Td>
+                                    <Table.Td>
+                                        {items.map((item: any) => (
+                                            <div key={item.id}>
+                                                <Text size="sm">
+                                                    • {item.products?.name} ({item.products?.color}) - {item.quantity_yards}yds
+                                                </Text>
+                                                {order.status === 'pending' && (
+                                                    <Group gap="xs" mt={2} mb={4}>
+                                                        <Text size="xs" c="dimmed">단가 설정:</Text>
+                                                        <NumberInput
+                                                            size="xs" w={100}
+                                                            value={priceMap[item.id] || 0}
+                                                            hideControls
+                                                            onChange={(v) => setPriceMap(prev => ({ ...prev, [item.id]: Number(v) }))}
+                                                        />
+                                                    </Group>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {order.note && <Text size="xs" c="orange" mt={4}>📝 {order.note}</Text>}
+                                    </Table.Td>
+                                    <Table.Td>
+                                        <Text fw={700}>{Number(order.total_price || 0).toLocaleString()} 원</Text>
+                                    </Table.Td>
+                                    <Table.Td>
+                                        <Badge color={statusInfo.color}>{statusInfo.label}</Badge>
+                                    </Table.Td>
+                                    <Table.Td>
+                                        <Group gap="xs">
+                                            {order.status === 'pending' && (
+                                                <Button size="compact-xs" color="navy" onClick={() => handleApprove(order)}>
+                                                    승인
+                                                </Button>
+                                            )}
+                                            {order.status === 'approved' && (
+                                                <Button size="compact-xs" color="blue" onClick={() => updateStatus(order.id, 'preparing')}>
+                                                    출고준비
+                                                </Button>
+                                            )}
+                                            {order.status === 'preparing' && (
+                                                <Button size="compact-xs" color="gray" leftSection={<IconTruckDelivery size={14} />} onClick={() => updateStatus(order.id, 'shipped')}>
+                                                    출고완료
+                                                </Button>
+                                            )}
+                                            {order.status !== 'shipped' && order.status !== 'cancelled' && (
+                                                <Button size="compact-xs" variant="subtle" color="red" onClick={() => updateStatus(order.id, 'cancelled')}>
+                                                    취소
+                                                </Button>
+                                            )}
+                                        </Group>
+                                    </Table.Td>
+                                </Table.Tr>
+                            );
+                        })}
+                    </Table.Tbody>
+                </Table>
+                {orders.length === 0 && <Text ta="center" py="xl" c="dimmed">주문 내역이 없습니다.</Text>}
+            </Card>
         </Container>
     );
 }

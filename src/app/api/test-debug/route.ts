@@ -68,6 +68,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, columns: data.length > 0 ? Object.keys(data[0]) : 'No users found', data: data });
         }
 
+        // 5. CHECK SPECIFIC COLUMN
+        if (action === 'check_column') {
+            // Try selecting the problematic column
+            const { data, error } = await supabase.from('users').select('business_name').limit(1);
+            return NextResponse.json({
+                exists: !error,
+                error: error ? error.message : null
+            });
+        }
+
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 
     } catch (e: any) {
