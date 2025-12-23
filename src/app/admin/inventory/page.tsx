@@ -183,7 +183,7 @@ export default function InventoryPage() {
                                         </Table.Td>
                                         <Table.Td fw={600} c="navy.9">{p.name}</Table.Td>
                                         <Table.Td>{p.color}</Table.Td>
-                                        <Table.Td fw={500}>{p.price_per_yard.toLocaleString()} 원</Table.Td>
+                                        <Table.Td fw={500}>{(p.price_per_yard || 0).toLocaleString()} 원</Table.Td>
                                         <Table.Td>
                                             <Badge color={totalStock > 0 ? 'teal' : 'gray'} variant="light" size="lg">
                                                 {totalStock} yds
@@ -214,8 +214,8 @@ export default function InventoryPage() {
                                                         <Group gap="sm">
                                                             {productRolls.map(roll => (
                                                                 <Card key={roll.id} shadow="sm" padding="xs" radius="md" withBorder w={140} bg="white">
-                                                                    <Text fw={700} size="sm" c="navy.9">{roll.roll_label}</Text>
-                                                                    <Text size="xs" c="dimmed">{Number(roll.quantity_yards)} yds</Text>
+                                                                    <Text fw={700} size="sm" c="navy.9">{roll.roll_label || '번호 없음'}</Text>
+                                                                    <Text size="xs" c="dimmed">{Number(roll.quantity_yards || 0)} yds</Text>
                                                                     <Badge size="xs" color={roll.status === 'active' ? 'teal' : 'gray'} mt={5} variant="dot">
                                                                         {roll.status === 'active' ? '판매가능' : '소진됨'}
                                                                     </Badge>
