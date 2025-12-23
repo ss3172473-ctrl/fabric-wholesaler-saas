@@ -110,33 +110,41 @@ export default function AdminOrdersPage() {
             <Title order={2} mb="lg" c="navy.9">주문 관리 (견적 승인)</Title>
 
             <Accordion variant="separated" radius="md">
-                {(orders || []).map(order => {
-                    if (!order) return null;
+                {(orders || []).map((order: any) => {
+                    if (!order || !order.id) return null;
+
+                    const bizName = order.users?.business_name || '알 수 없음';
+                    const createdAt = order.created_at ? formatKSTDate(order.created_at) : '-';
+                    const status = order.status || 'unknown';
+                    const totalPrice = Number(order.total_price || 0);
+                    const note = order.note || '없음';
+                    const items = order.order_items || [];
+
                     return (
                         <Accordion.Item key={order.id} value={order.id} mb="sm" bg="white" style={{ border: '1px solid #eee' }}>
                             <Accordion.Control>
                                 <Group justify="space-between" pr="md" wrap="nowrap">
-                                    <div>
-                                        <Text fw={700} size="lg" c="navy.9">{order.users?.business_name || '알 수 없음'}</Text>
-                                        <Text size="sm" c="dimmed">{formatKSTDate(order.created_at)}</Text>
+                                    <div style={{ flex: 1 }}>
+                                        <Text fw={700} size="lg" c="navy.9">{bizName}</Text>
+                                        <Text size="sm" c="dimmed">{createdAt}</Text>
                                     </div>
-                                    <Group wrap="nowrap">
+                                    <Group wrap="nowrap" gap="xl">
                                         <Text fw={700} c="navy.9">
-                                            {order.status === 'pending' ? '견적 대기중' : `${(order.total_price || 0).toLocaleString()} 원`}
+                                            {status === 'pending' ? '견적 대기중' : `${totalPrice.toLocaleString()} 원`}
                                         </Text>
                                         <Badge size="lg" color={
-                                            order.status === 'pending' ? 'yellow' :
-                                                order.status === 'approved' ? 'teal' : 'gray'
+                                            status === 'pending' ? 'yellow' :
+                                                status === 'approved' ? 'teal' : 'gray'
                                         }>
-                                            {order.status === 'pending' ? '접수대기' :
-                                                order.status === 'approved' ? '승인완료' : (order.status || '상태없음')}
+                                            {status === 'pending' ? '접수대기' :
+                                                status === 'approved' ? '승인완료' : status}
                                         </Badge>
                                     </Group>
                                 </Group>
                             </Accordion.Control>
                             <Accordion.Panel>
                                 <Card withBorder bg="gray.0" mb="md" radius="md">
-                                    <Text size="sm" mb="sm" fw={500}>📝 주문 메모: {order.note || '없음'}</Text>
+                                    <Text size="sm" mb="sm" fw={500}>📝 주문 메모: {note}</Text>
                                     <Table bg="white" withTableBorder>
                                         <Table.Thead>
                                             <Table.Tr>
@@ -148,18 +156,21 @@ export default function AdminOrdersPage() {
                                             </Table.Tr>
                                         </Table.Thead>
                                         <Table.Tbody>
-                                            {(order.order_items || []).map(item => {
+                                            {(items || []).map((item: any) => {
                                                 if (!item) return null;
                                                 const currentPrice = priceMap[item.id] || 0;
                                                 const qty = Number(item.quantity_yards || 0);
                                                 const fixedPrice = Number(item.price_at_moment || 0);
+                                                const prodName = item.products?.name || '-';
+                                                const prodColor = item.products?.color || '-';
+
                                                 return (
                                                     <Table.Tr key={item.id}>
-                                                        <Table.Td>{item.products?.name || '-'}</Table.Td>
-                                                        <Table.Td>{item.products?.color || '-'}</Table.Td>
+                                                        <Table.Td>{prodName}</Table.Td>
+                                                        <Table.Td>{prodColor}</Table.Td>
                                                         <Table.Td>{qty} yds</Table.Td>
                                                         <Table.Td>
-                                                            {order.status === 'pending' ? (
+                                                            {status === 'pending' ? (
                                                                 <NumberInput
                                                                     value={currentPrice}
                                                                     onChange={(v) => setPriceMap(prev => ({ ...prev, [item.id]: Number(v) }))}
@@ -172,7 +183,7 @@ export default function AdminOrdersPage() {
                                                             )}
                                                         </Table.Td>
                                                         <Table.Td fw={600}>
-                                                            {(qty * (order.status === 'pending' ? currentPrice : fixedPrice)).toLocaleString()} 원
+                                                            {(qty * (status === 'pending' ? currentPrice : fixedPrice)).toLocaleString()} 원
                                                         </Table.Td>
                                                     </Table.Tr>
                                                 );
@@ -184,7 +195,7 @@ export default function AdminOrdersPage() {
                                         <Button size="sm" variant="outline" color="red" onClick={() => updateStatus(order.id, 'cancelled')}>
                                             주문 취소
                                         </Button>
-                                        {order.status === 'pending' && (
+                                        {status === 'pending' && (
                                             <Button size="sm" color="navy" onClick={() => handleApprove(order)}>
                                                 ✅ 단가 확정 및 승인
                                             </Button>
@@ -196,7 +207,7 @@ export default function AdminOrdersPage() {
                     );
                 })}
             </Accordion>
-            {orders.length === 0 && <Text ta="center" c="dimmed" mt="xl">들어온 주문 내역이 없습니다.</Text>}
+            {(!orders || orders.length === 0) && <Text ta="center" c="dimmed" mt="xl">들어온 주문 내역이 없습니다.</Text>}
         </Container>
     );
 }
