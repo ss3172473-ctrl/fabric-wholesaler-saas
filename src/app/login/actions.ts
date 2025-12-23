@@ -47,8 +47,11 @@ export async function login(formData: FormData) {
         const expectedRole = formData.get('expectedRole') as string;
         if (expectedRole && userProfile?.role !== expectedRole) {
             await supabase.auth.signOut();
-            const roleName = expectedRole === 'admin' ? '판매자' : '구매자';
-            return { error: `로그인 실패: 이 계정은 ${roleName} 로그인 전용이 아닙니다.` };
+            const isTryingAsAdmin = expectedRole === 'admin';
+            const errorMsg = isTryingAsAdmin
+                ? "로그인 실패: 본 계정은 판매자(관리자) 권한이 없습니다. 구매자 전용 로그인을 이용해주세요."
+                : "로그인 실패: 본 계정은 구매자(거래처) 권한이 아닙니다. 판매자 전용 로그인을 이용해주세요.";
+            return { error: errorMsg };
         }
 
         if (userProfile?.role === 'admin') {
