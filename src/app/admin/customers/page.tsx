@@ -85,8 +85,8 @@ export default function CustomersPage() {
                             <Table.Td fw={600} c="navy.9">{c.business_name}</Table.Td>
                             <Table.Td>{c.phone}</Table.Td>
                             <Table.Td>
-                                <span style={{ color: c.current_balance > 0 ? '#fa5252' : 'inherit', fontWeight: c.current_balance > 0 ? 600 : 400 }}>
-                                    {c.current_balance.toLocaleString()} 원
+                                <span style={{ color: (c.current_balance || 0) > 0 ? '#fa5252' : 'inherit', fontWeight: (c.current_balance || 0) > 0 ? 600 : 400 }}>
+                                    {(c.current_balance || 0).toLocaleString()} 원
                                 </span>
                             </Table.Td>
                             <Table.Td>
