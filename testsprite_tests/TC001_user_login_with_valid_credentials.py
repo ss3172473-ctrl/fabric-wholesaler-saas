@@ -5,32 +5,34 @@ def test_user_login_with_valid_credentials():
     login_url = f"{base_url}/login"
     timeout = 30
 
-    # Valid user credentials for testing
-    valid_email = "testuser@example.com"
-    valid_password = "TestPassword123!"
+    # Valid credentials for testing - replace with actual valid test user credentials
+    email = "testuser@example.com"
+    password = "SecureP@ssw0rd!"
 
-    # Prepare multipart/form-data payload - use files to force multipart/form-data encoding
-    payload = {
-        'email': (None, valid_email),
-        'password': (None, valid_password)
+    data = {
+        "email": email,
+        "password": password
+    }
+
+    headers = {
+        "Content-Type": "multipart/form-data"
     }
 
     try:
-        response = requests.post(login_url, files=payload, timeout=timeout)
+        response = requests.post(login_url, data=data, headers=headers, timeout=timeout)
     except requests.RequestException as e:
         assert False, f"Request to /login failed: {e}"
 
-    # Validate response status code
     assert response.status_code == 200, f"Expected status code 200, got {response.status_code}"
 
-    # Validate response content (ensure token or user info present)
+    # Assuming success response contains JSON with user data and access token
     try:
-        json_data = response.json()
+        resp_json = response.json()
     except ValueError:
         assert False, "Response is not valid JSON"
 
-    # Typical successful Supabase login returns access_token, user or similar
-    assert 'access_token' in json_data or 'user' in json_data, \
-        "Response JSON does not contain expected authentication tokens or user info"
+    assert "access_token" in resp_json, "Response JSON does not contain access_token"
+    assert "user" in resp_json, "Response JSON does not contain user information"
+    assert resp_json["user"].get("email") == email, "Logged in user email does not match"
 
 test_user_login_with_valid_credentials()

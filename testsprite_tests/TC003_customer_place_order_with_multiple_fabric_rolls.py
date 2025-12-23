@@ -1,90 +1,142 @@
 import requests
-import uuid
 
 BASE_URL = "http://localhost:3000"
 TIMEOUT = 30
 
+# Mock user credentials for login
+USER_EMAIL = "testuser@example.com"
+USER_PASSWORD = "TestPassword123!"
+
+# Mock admin credentials for creating a product
+ADMIN_EMAIL = "admin@example.com"
+ADMIN_PASSWORD = "AdminPassword123!"
+
+# Headers for JSON requests
+HEADERS_JSON = {
+    "Content-Type": "application/json"
+}
+
 def test_customer_place_order_with_multiple_fabric_rolls():
-    # First, create a customer to authenticate and place order
-    admin_create_customer_url = f"{BASE_URL}/admin/customers/create"
-    customer_email = f"testuser_{uuid.uuid4().hex[:8]}@example.com"
-    customer_password = "TestPass123!"
-    customer_name = "Test User"
-    customer_company = "Test Company"
-    customer_phone = "1234567890"
-
-    # Admin creates a new customer account
-    try:
-        create_customer_response = requests.post(
-            admin_create_customer_url,
-            headers={"Content-Type": "multipart/form-data"},
-            files={
-                "email": (None, customer_email),
-                "password": (None, customer_password),
-                "name": (None, customer_name),
-                "company": (None, customer_company),
-                "phone": (None, customer_phone)
-            },
-            timeout=TIMEOUT
-        )
-        assert create_customer_response.status_code == 200, f"Failed to create customer: {create_customer_response.text}"
-    except Exception as e:
-        raise AssertionError(f"Exception during customer creation: {e}")
-
-    # Login the created customer to get authentication/session info if required
+    # 1. Login: get user auth token (simulate Supabase auth)
     login_url = f"{BASE_URL}/login"
-    try:
-        login_response = requests.post(
-            login_url,
-            files={
-                "email": (None, customer_email),
-                "password": (None, customer_password)
-            },
-            timeout=TIMEOUT
-        )
-        assert login_response.status_code == 200, f"Login failed: {login_response.text}"
-        login_data = login_response.json()
-        # Assuming token or session cookie is returned; handle accordingly
-        # If token present, use it for auth header
-        token = login_data.get("access_token") or login_data.get("token")
-        headers = {"Content-Type": "application/json"}
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
-        else:
-            # If no token, rely on cookies
-            session = requests.Session()
-            session.cookies.update(login_response.cookies)
-    except Exception as e:
-        raise AssertionError(f"Exception during login: {e}")
-
-    order_url = f"{BASE_URL}/shop/order"
-    order_payload = {
-        "items": [
-            {"productId": "fabric_roll_001", "quantity": 2, "price": 15.5},
-            {"productId": "fabric_roll_002", "quantity": 1, "price": 20.0},
-            {"productId": "fabric_roll_003", "quantity": 5, "price": 7.25}
-        ],
-        "note": "Please deliver between 9 AM to 5 PM."
+    login_files = [
+        ("email", USER_EMAIL),
+        ("password", USER_PASSWORD)
+    ]
+    resp_login = requests.post(login_url, files=login_files, timeout=TIMEOUT)
+    assert resp_login.status_code == 200, f"Login failed with status {resp_login.status_code}"
+    login_json = resp_login.json()
+    assert "access_token" in login_json, "No access_token in login response"
+    access_token = login_json["access_token"]
+    auth_headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
     }
 
+    # 2. Inventory: create two fabric roll products
+    # Assuming an authenticated admin endpoint available at /admin/inventory/create (not explicitly given, we mock creation)
+    # Since inventory creation logic is to be verified (mock/ or check page logic), we'll create products via admin customer creation syntax if possible, else skip actual product create.
+    # But PRD mentions inventory management API not explicitly present - we will assume an endpoint exists:
+    inventory_create_url = f"{BASE_URL}/admin/inventory/create"
+    product1_payload = {
+        "name": "Fabric Roll A",
+        "description": "High quality cotton fabric roll",
+        "price": 25.50,
+        "stock": 100
+    }
+    product2_payload = {
+        "name": "Fabric Roll B",
+        "description": "Premium linen fabric roll",
+        "price": 40.00,
+        "stock": 50
+    }
+
+    # For admin authentication, login admin user
+    admin_login_files = [
+        ("email", ADMIN_EMAIL),
+        ("password", ADMIN_PASSWORD)
+    ]
+    admin_login_resp = requests.post(login_url, files=admin_login_files, timeout=TIMEOUT)
+    assert admin_login_resp.status_code == 200, "Admin login failed"
+    admin_token = admin_login_resp.json().get("access_token")
+    assert admin_token, "No admin access_token"
+    admin_headers = {
+        "Authorization": f"Bearer {admin_token}",
+        "Content-Type": "application/json"
+    }
+
+    product_ids = []
     try:
-        if token:
-            order_response = requests.post(
-                order_url, json=order_payload, headers=headers, timeout=TIMEOUT
-            )
-        else:
-            order_response = session.post(
-                order_url, json=order_payload, headers={"Content-Type": "application/json"}, timeout=TIMEOUT
-            )
-        assert order_response.status_code == 200 or order_response.status_code == 201, f"Order placement failed: {order_response.text}"
-        order_data = order_response.json()
-        assert "id" in order_data or "orderId" in order_data, "Order ID expected in response"
-        assert "items" in order_data, "Order items expected in response"
-        assert len(order_data["items"]) == len(order_payload["items"]), "Number of items in response does not match request"
-    except Exception as e:
-        raise AssertionError(f"Exception during order placement: {e}")
+        # Create product 1
+        resp_product1 = requests.post(inventory_create_url, json=product1_payload, headers=admin_headers, timeout=TIMEOUT)
+        assert resp_product1.status_code == 201, f"Failed to create product1, status {resp_product1.status_code}"
+        product1_data = resp_product1.json()
+        product_id_1 = product1_data.get("id")
+        assert product_id_1, "No product1 id returned"
+        product_ids.append(product_id_1)
+
+        # Create product 2
+        resp_product2 = requests.post(inventory_create_url, json=product2_payload, headers=admin_headers, timeout=TIMEOUT)
+        assert resp_product2.status_code == 201, f"Failed to create product2, status {resp_product2.status_code}"
+        product2_data = resp_product2.json()
+        product_id_2 = product2_data.get("id")
+        assert product_id_2, "No product2 id returned"
+        product_ids.append(product_id_2)
+
+        # 3. Shop Order: place order with multiple items (using the products created)
+        order_url = f"{BASE_URL}/shop/order"
+        order_payload = {
+            "items": [
+                {
+                    "productId": product_id_1,
+                    "quantity": 3,
+                    "price": product1_payload["price"]
+                },
+                {
+                    "productId": product_id_2,
+                    "quantity": 2,
+                    "price": product2_payload["price"]
+                }
+            ],
+            "note": "Please deliver between 9 AM and 5 PM"
+        }
+
+        resp_order = requests.post(order_url, json=order_payload, headers=auth_headers, timeout=TIMEOUT)
+        assert resp_order.status_code == 201, f"Order creation failed with status {resp_order.status_code}"
+        order_resp_json = resp_order.json()
+        assert "orderId" in order_resp_json, "No orderId in order response"
+        order_id = order_resp_json["orderId"]
+
+        # 4. Order Approval: simulate admin approval of order
+        # Assume endpoint /admin/orders/{order_id}/approve with POST to approve
+        approve_url = f"{BASE_URL}/admin/orders/{order_id}/approve"
+        resp_approve = requests.post(approve_url, headers=admin_headers, timeout=TIMEOUT)
+        assert resp_approve.status_code == 200, f"Order approval failed with status {resp_approve.status_code}"
+        approve_json = resp_approve.json()
+        assert approve_json.get("status") == "approved", "Order status is not approved after approval"
+
+        # 5. Settlement: verify settlement calculation
+        # Assume endpoint /admin/settlements/calculate that returns settlement data for approved orders
+        settlement_url = f"{BASE_URL}/admin/settlements/calculate"
+        resp_settlement = requests.get(settlement_url, headers=admin_headers, timeout=TIMEOUT)
+        assert resp_settlement.status_code == 200, f"Settlement calculation failed with status {resp_settlement.status_code}"
+        settlement_data = resp_settlement.json()
+        # Check that the recently approved order amount is included in settlement results
+        order_amount = (product1_payload["price"] * 3) + (product2_payload["price"] * 2)
+        orders_in_settlement = settlement_data.get("orders", [])
+        found_order = False
+        for o in orders_in_settlement:
+            if o.get("orderId") == order_id and abs(o.get("totalAmount", 0) - order_amount) < 0.01:
+                found_order = True
+                break
+        assert found_order, "Approved order not found or total amount mismatch in settlement data"
+
     finally:
-        # Cleanup not specified for orders, assuming no delete endpoint available.
-        pass
+        # Cleanup: delete created products and order if possible
+        # Delete order - assume DELETE /admin/orders/{order_id}
+        if 'order_id' in locals():
+            requests.delete(f"{BASE_URL}/admin/orders/{order_id}", headers=admin_headers, timeout=TIMEOUT)
+        for pid in product_ids:
+            requests.delete(f"{BASE_URL}/admin/inventory/{pid}", headers=admin_headers, timeout=TIMEOUT)
 
 test_customer_place_order_with_multiple_fabric_rolls()

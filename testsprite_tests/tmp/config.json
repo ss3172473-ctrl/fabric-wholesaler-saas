@@ -5,13 +5,13 @@
   "localEndpoint": "http://localhost:3000",
   "backendAuthType": "public",
   "executionArgs": {
-    "projectName": "영진 장부처리 자동화",
+    "projectName": "a",
     "projectPath": "/Users/leesungjun/영진 장부처리 자동화",
     "testIds": [],
-    "additionalInstruction": "",
+    "additionalInstruction": "Generate and run tests for the following 5 flows:\n1. Login: Verify 'login' action in src/app/login/actions.ts works with correct credentials.\n2. Inventory: Verify product creation logic (Mock if necessary, or check src/app/admin/inventory/page.tsx logic).\n3. Shop Order: Verify 'createOrder' in src/app/shop/actions.ts.\n4. Order Approval: Check order status update logic.\n5. Settlement: Verify settlement calculation logic.\n\nImportant: Since these are Server Actions using FormData and Supabase, ensure the test environment mocks FormData correctly or uses a polyfill. The previous run failed with FormData errors. Use 'jest' or 'vitest' and ensure environment is set up for Node.js.",
     "envs": {
       "API_KEY": "sk-user-x7tVJz86-yopFNBLIlZIxH-S2Zu6nwKPWBBH9kIqGTZxQ5WZYfL6j3oJ8cLoNXfQIH1TMIjax_nPskbbrbosjd5bnrkS56Z_NGX82g_ZVWR0PJm7ENU1GFeBK-29hSS1SDI"
     }
   },
-  "proxy": "http://90fec15b-709f-4472-81a6-0cf109f8770c:yAogCDOhcJvk9wM5Llp5KegobSd9ljrW@tun.testsprite.com:8080"
+  "proxy": "http://b4290e4b-9694-4026-b4fe-22a90ea53b29:AGsIz8XI7jxJHuJH92C8UDsbCQQoLu2h@tun.testsprite.com:8080"
 }
