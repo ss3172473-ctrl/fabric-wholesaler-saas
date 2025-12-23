@@ -1,0 +1,6 @@
+/* Basic global styles if needed, but Mantine handles most */
+/* Reset can be helpful */
+body {
+  margin: 0;
+  padding: 0;
+}
