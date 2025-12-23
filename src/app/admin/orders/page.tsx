@@ -52,9 +52,9 @@ export default function AdminOrdersPage() {
                 // Initialize price map with current or base product prices
                 const map: Record<string, number> = {};
                 data.forEach((o: any) => {
-                    o.order_items.forEach((item: any) => {
+                    (o.order_items || []).forEach((item: any) => {
                         // Use existing price if set (>0), otherwise product base price
-                        map[item.id] = item.price_at_moment > 0 ? item.price_at_moment : item.products?.price_per_yard || 0;
+                        map[item.id] = (item.price_at_moment || 0) > 0 ? item.price_at_moment : (item.products?.price_per_yard || 0);
                     });
                 });
                 setPriceMap(map);
@@ -74,7 +74,7 @@ export default function AdminOrdersPage() {
         if (!confirm('설정된 단가로 주문을 승인하시겠습니까?')) return;
         setLoading(true);
 
-        const itemsToUpdate = order.order_items.map(item => ({
+        const itemsToUpdate = (order.order_items || []).map(item => ({
             id: item.id,
             price: priceMap[item.id] || 0
         }));
@@ -100,14 +100,14 @@ export default function AdminOrdersPage() {
                 {orders.map(order => (
                     <Accordion.Item key={order.id} value={order.id} mb="sm" bg="white" style={{ border: '1px solid #eee' }}>
                         <Accordion.Control>
-                            <Group justify="space-between" pr="md">
+                            <Group justify="space-between" pr="md" wrap="nowrap">
                                 <div>
                                     <Text fw={700} size="lg" c="navy.9">{order.users?.business_name || '알 수 없음'}</Text>
-                                    <Text size="sm" c="dimmed">{new Date(order.created_at).toLocaleString('ko-KR')}</Text>
+                                    <Text size="sm" c="dimmed">{order.created_at ? new Date(order.created_at).toLocaleString('ko-KR') : '-'}</Text>
                                 </div>
-                                <Group>
+                                <Group wrap="nowrap">
                                     <Text fw={700} c="navy.9">
-                                        {order.status === 'pending' ? '견적 대기중' : `${order.total_price.toLocaleString()} 원`}
+                                        {order.status === 'pending' ? '견적 대기중' : `${(order.total_price || 0).toLocaleString()} 원`}
                                     </Text>
                                     <Badge size="lg" color={
                                         order.status === 'pending' ? 'yellow' :
@@ -133,13 +133,15 @@ export default function AdminOrdersPage() {
                                         </Table.Tr>
                                     </Table.Thead>
                                     <Table.Tbody>
-                                        {order.order_items.map(item => {
+                                        {(order.order_items || []).map(item => {
                                             const currentPrice = priceMap[item.id] || 0;
+                                            const qty = Number(item.quantity_yards || 0);
+                                            const fixedPrice = Number(item.price_at_moment || 0);
                                             return (
                                                 <Table.Tr key={item.id}>
-                                                    <Table.Td>{item.products?.name}</Table.Td>
-                                                    <Table.Td>{item.products?.color}</Table.Td>
-                                                    <Table.Td>{item.quantity_yards} yds</Table.Td>
+                                                    <Table.Td>{item.products?.name || '-'}</Table.Td>
+                                                    <Table.Td>{item.products?.color || '-'}</Table.Td>
+                                                    <Table.Td>{qty} yds</Table.Td>
                                                     <Table.Td>
                                                         {order.status === 'pending' ? (
                                                             <NumberInput
@@ -150,11 +152,11 @@ export default function AdminOrdersPage() {
                                                                 size="xs"
                                                             />
                                                         ) : (
-                                                            `${item.price_at_moment.toLocaleString()} 원`
+                                                            `${fixedPrice.toLocaleString()} 원`
                                                         )}
                                                     </Table.Td>
                                                     <Table.Td fw={600}>
-                                                        {(item.quantity_yards * (order.status === 'pending' ? currentPrice : item.price_at_moment)).toLocaleString()} 원
+                                                        {(qty * (order.status === 'pending' ? currentPrice : fixedPrice)).toLocaleString()} 원
                                                     </Table.Td>
                                                 </Table.Tr>
                                             );
