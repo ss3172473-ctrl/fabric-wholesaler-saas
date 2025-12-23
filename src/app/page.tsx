@@ -1,7 +1,7 @@
 'use client';
 
 import { Container, Title, Button, Group, Text, Card, SimpleGrid, ThemeIcon, Box } from '@mantine/core';
-import { IconDatabaseImport, IconLogin, IconDeviceMobile, IconChartBar } from '@tabler/icons-react';
+import { IconDatabaseImport, IconLogin, IconDeviceMobile, IconChartBar, IconBuildingWarehouse } from '@tabler/icons-react';
 import Link from 'next/link';
 
 export default function Home() {
