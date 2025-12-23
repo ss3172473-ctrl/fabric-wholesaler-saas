@@ -8,6 +8,22 @@ import { useFormStatus } from 'react-dom';
 import { login } from './actions';
 import { IconAlertCircle, IconBuildingWarehouse } from '@tabler/icons-react';
 
+function SubmitButton({ color }: { color: string }) {
+    const { pending } = useFormStatus();
+    return (
+        <Button
+            fullWidth
+            mt="xl"
+            size="lg"
+            type="submit"
+            loading={pending}
+            color={color}
+        >
+            로그인 하기
+        </Button>
+    );
+}
+
 function LoginForm() {
     const searchParams = useSearchParams();
     const role = searchParams.get('role') || 'customer';
