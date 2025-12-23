@@ -32,6 +32,22 @@ export async function login(formData: FormData) {
         return { error: `로그인 실패: ${error.message} ${debugInfo}` };
     }
 
+    // Check Role
+    const { data: authData } = await supabase.auth.getUser();
+    let redirectPath = '/shop'; // Default for customer
+
+    if (authData.user) {
+        const { data: userProfile } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', authData.user.id)
+            .single();
+
+        if (userProfile?.role === 'admin') {
+            redirectPath = '/admin/dashboard';
+        }
+    }
+
     revalidatePath('/', 'layout');
-    redirect('/admin/dashboard');
+    redirect(redirectPath);
 }

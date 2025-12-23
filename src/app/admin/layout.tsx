@@ -17,6 +17,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.push('/login');
     };
 
+    useEffect(() => {
+        const checkRole = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
+                if (profile && profile.role !== 'admin') {
+                    router.replace('/shop');
+                }
+            }
+        };
+        checkRole();
+    }, []);
+
     return (
         <AppShell
             header={{ height: 60 }}

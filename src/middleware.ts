@@ -48,9 +48,13 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // 2. If accessing /login and IS logged in -> Redirect to /admin/dashboard
+    // 2. If accessing /login and IS logged in -> Redirect to /shop (Default Home)
+    // Note: Admin users attempting to visit /login will also go to /shop first, 
+    // but usually they will click 'Admin' link or go directly. 
+    // Ideally we check role here too, but middleware role check requires DB call which is expensive/complex in edge.
+    // We let them go to /shop, and if they are admin, they can navigate to /admin.
     if (url.pathname.startsWith('/login') && user) {
-        url.pathname = '/admin/dashboard'
+        url.pathname = '/shop'
         return NextResponse.redirect(url)
     }
 
