@@ -21,7 +21,8 @@ export async function login(formData: FormData) {
     });
 
     if (error) {
-        return { error: '로그인 정보가 올바르지 않습니다.' };
+        console.error("Login Error:", error.message);
+        return { error: `로그인 실패: ${error.message}` };
     }
 
     revalidatePath('/', 'layout');
