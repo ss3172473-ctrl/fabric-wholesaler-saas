@@ -193,7 +193,8 @@ export default function AdminOrdersPage() {
                                 </Card>
                             </Accordion.Panel>
                         </Accordion.Item>
-                    ))}
+                    );
+                })}
             </Accordion>
             {orders.length === 0 && <Text ta="center" c="dimmed" mt="xl">들어온 주문 내역이 없습니다.</Text>}
         </Container>
