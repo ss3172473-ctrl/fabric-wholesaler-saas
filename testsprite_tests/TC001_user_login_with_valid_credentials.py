@@ -1,38 +1,26 @@
 import requests
 
+BASE_ENDPOINT = "http://localhost:3000/login"
+TIMEOUT = 30
+
 def test_user_login_with_valid_credentials():
-    base_url = "http://localhost:3000"
-    login_url = f"{base_url}/login"
-    timeout = 30
-
-    # Valid credentials for testing - replace with actual valid test user credentials
-    email = "testuser@example.com"
-    password = "SecureP@ssw0rd!"
-
-    data = {
+    url = BASE_ENDPOINT
+    email = "35081363@naver.com"
+    password = "qwas1122**"
+    payload = {
         "email": email,
         "password": password
     }
 
-    headers = {
-        "Content-Type": "multipart/form-data"
-    }
-
-    try:
-        response = requests.post(login_url, data=data, headers=headers, timeout=timeout)
-    except requests.RequestException as e:
-        assert False, f"Request to /login failed: {e}"
-
-    assert response.status_code == 200, f"Expected status code 200, got {response.status_code}"
-
-    # Assuming success response contains JSON with user data and access token
+    # Make API request to login
+    response = requests.post(url, data=payload, timeout=TIMEOUT)
+    assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
     try:
         resp_json = response.json()
-    except ValueError:
-        assert False, "Response is not valid JSON"
+    except Exception as e:
+        assert False, f"Response is not valid JSON: {e}"
 
-    assert "access_token" in resp_json, "Response JSON does not contain access_token"
-    assert "user" in resp_json, "Response JSON does not contain user information"
-    assert resp_json["user"].get("email") == email, "Logged in user email does not match"
+    assert "success" in resp_json, "'success' field missing in response"
+    assert resp_json["success"] is True, f"Login failed: {resp_json}"
 
 test_user_login_with_valid_credentials()

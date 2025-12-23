@@ -3,29 +3,32 @@
         "TypeScript",
         "Next.js 14",
         "Supabase",
-        "Mantine UI"
+        "API Routes"
     ],
     "features": [
         {
-            "name": "Auth - Login",
-            "description": "User login using Supabase Auth",
+            "name": "Debug - Login",
+            "description": "Test login via debug API",
             "files": [
-                "src/app/login/actions.ts"
-            ]
+                "src/app/api/test-debug/route.ts"
+            ],
+            "api_endpoint": "POST /api/test-debug?action=login"
         },
         {
-            "name": "Admin - Create Customer",
-            "description": "Admin creates a new customer user using Service Role",
+            "name": "Debug - Create Customer",
+            "description": "Test customer creation via debug API",
             "files": [
-                "src/app/admin/customers/actions.ts"
-            ]
+                "src/app/api/test-debug/route.ts"
+            ],
+            "api_endpoint": "POST /api/test-debug?action=create_customer"
         },
         {
-            "name": "Shop - Create Order",
-            "description": "Customer places an order",
+            "name": "Debug - Check Inventory",
+            "description": "Test DB connection via debug API",
             "files": [
-                "src/app/shop/actions.ts"
-            ]
+                "src/app/api/test-debug/route.ts"
+            ],
+            "api_endpoint": "POST /api/test-debug?action=check_inventory"
         }
     ]
 }

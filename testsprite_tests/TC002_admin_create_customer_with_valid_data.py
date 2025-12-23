@@ -1,74 +1,52 @@
 import requests
-from requests.exceptions import RequestException
-from datetime import datetime
-import random
-import string
+import uuid
+from supabase import create_client, Client
 
-BASE_URL = "http://localhost:3000"
-TIMEOUT = 30
+BASE_URL = "http://localhost:3000/api/test-debug"
+SUPABASE_URL = "https://asdegiubqpjnxebtznot.supabase.co"
+SUPABASE_SERVICE_KEY = "sb_secret_Wgj-2IcFcDs4O5WtgTB5HQ_kNa2IdPv"
 
-def random_email():
-    return f"testadmin+{''.join(random.choices(string.ascii_lowercase+string.digits, k=8))}@example.com"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 def test_admin_create_customer_with_valid_data():
-    url = f"{BASE_URL}/admin/customers/create"
-    # Create a unique email to avoid conflicts
-    email = random_email()
-    password = "StrongP@ssw0rd!"
-    name = "Test Admin Customer"
+    unique_email = f"testuser_{uuid.uuid4().hex[:8]}@example.com"
+    password = "StrongPass123!"
+    name = "Test User"
     company = "Test Company Inc."
-    phone = "+1234567890"
+    phone = "123-456-7890"
 
-    # Prepare multipart/form-data payload
-    # requests can handle multipart/form-data by passing dict to 'files' or 'data' param,
-    # but to mimic multipart/form-data and avoid FormData issues, we use 'files' param with tuples.
-    # Since no files are uploaded, just send data as tuples.
-
+    url = f"{BASE_URL}?action=create_customer"
     payload = {
-        'email': (None, email),
-        'password': (None, password),
-        'name': (None, name),
-        'company': (None, company),
-        'phone': (None, phone)
+        "email": unique_email,
+        "password": password,
+        "name": name,
+        "company": company,
+        "phone": phone,
     }
 
-    created_customer_id = None
+    headers = {
+        # multipart/form-data handled by requests with files or data;
+        # here no files, so send as form data by using `data=payload`
+        # requests sets Content-Type automatically in such case.
+    }
 
+    # Create customer - POST form data
+    response = requests.post(url, data=payload, timeout=30, headers=headers)
+    assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+    resp_json = response.json()
+    assert "success" in resp_json, "Missing 'success' in response"
+    assert resp_json["success"] is True, f"Customer creation failed, response: {resp_json}"
+
+    # Verify customer exists in Supabase
     try:
-        response = requests.post(url, files=payload, timeout=TIMEOUT)
-    except RequestException as e:
-        assert False, f"Request to create customer failed: {e}"
+        customers = supabase.table("customers").select("*").eq("email", unique_email).execute()
+        assert customers.status_code == 200, f"Failed to query customers, status {customers.status_code}"
+        data = customers.data
+        assert isinstance(data, list), "Supabase query did not return a list"
+        assert any(cust.get("email") == unique_email for cust in data), "Created customer not found in Supabase"
+    finally:
+        # Cleanup: delete created customer record from Supabase
+        supabase.table("customers").delete().eq("email", unique_email).execute()
 
-    # Assert successful status code (201 Created or 200 OK)
-    assert response.status_code in (200, 201), f"Unexpected status code: {response.status_code}, Response: {response.text}"
-
-    # Parse response json
-    try:
-        resp_json = response.json()
-    except Exception:
-        assert False, f"Response is not valid JSON: {response.text}"
-
-    # The PRD does not describe response schema, but normally new resource id is returned.
-    # We try common keys and presence of customer data to validate success.
-
-    # Check for expected fields or success indicator
-    assert 'email' in resp_json and resp_json['email'] == email, f"Response email mismatch or missing. Got: {resp_json}"
-    # Optionally extract customer ID if available for deletion
-    if 'id' in resp_json:
-        created_customer_id = resp_json['id']
-
-    # If no explicit ID, try common alternatives
-    if not created_customer_id and 'customerId' in resp_json:
-        created_customer_id = resp_json['customerId']
-
-    # Cleanup - attempt to delete created customer if deletion endpoint exists
-    # As PRD doesn't specify a deletion API, handle only if possible.
-    if created_customer_id:
-        delete_url = f"{BASE_URL}/admin/customers/{created_customer_id}"
-        try:
-            del_resp = requests.delete(delete_url, timeout=TIMEOUT)
-            # We tolerate any status code for deletion; just log errors if any
-        except Exception:
-            pass
 
 test_admin_create_customer_with_valid_data()

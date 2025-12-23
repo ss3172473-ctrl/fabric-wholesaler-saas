@@ -8,10 +8,10 @@
     "projectName": "a",
     "projectPath": "/Users/leesungjun/영진 장부처리 자동화",
     "testIds": [],
-    "additionalInstruction": "Generate and run tests for the following 5 flows:\n1. Login: Verify 'login' action in src/app/login/actions.ts works with correct credentials.\n2. Inventory: Verify product creation logic (Mock if necessary, or check src/app/admin/inventory/page.tsx logic).\n3. Shop Order: Verify 'createOrder' in src/app/shop/actions.ts.\n4. Order Approval: Check order status update logic.\n5. Settlement: Verify settlement calculation logic.\n\nImportant: Since these are Server Actions using FormData and Supabase, ensure the test environment mocks FormData correctly or uses a polyfill. The previous run failed with FormData errors. Use 'jest' or 'vitest' and ensure environment is set up for Node.js.",
+    "additionalInstruction": "Generate 4 Python tests using 'requests' to hit the debug API, AND use the Supabase Python Client for verification if needed.\n\nAPI Endpoint Base: http://localhost:3000/api/test-debug\n\nCredentials for Verification:\n- URL: https://asdegiubqpjnxebtznot.supabase.co\n- Service Key: sb_secret_Wgj-2IcFcDs4O5WtgTB5HQ_kNa2IdPv\n\nTest Cases:\n1. User Login: POST ?action=login with email '35081363@naver.com' / 'qwas1122**'. Assert success=true.\n2. Login Failure: POST ?action=login with wrong password. Assert success=false.\n3. Inventory Check: POST ?action=check_inventory. Assert success=true.\n4. Create Customer: POST ?action=create_customer with unique email. Assert success=true.\n\nEnsure tests handle JSON responses correctly.",
     "envs": {
       "API_KEY": "sk-user-x7tVJz86-yopFNBLIlZIxH-S2Zu6nwKPWBBH9kIqGTZxQ5WZYfL6j3oJ8cLoNXfQIH1TMIjax_nPskbbrbosjd5bnrkS56Z_NGX82g_ZVWR0PJm7ENU1GFeBK-29hSS1SDI"
     }
   },
-  "proxy": "http://b4290e4b-9694-4026-b4fe-22a90ea53b29:AGsIz8XI7jxJHuJH92C8UDsbCQQoLu2h@tun.testsprite.com:8080"
+  "proxy": "http://463d3f1b-3dfe-4e7f-a80f-fab04693074a:2Ef4JR5l19WUU4uWl2eaas3bPeQoEMHu@tun.testsprite.com:8080"
 }
