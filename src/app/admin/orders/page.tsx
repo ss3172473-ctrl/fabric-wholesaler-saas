@@ -120,9 +120,8 @@ export default function AdminOrdersPage() {
             <Title order={2} mb="lg" c="navy.9">주문 관리 (견적 승인)</Title>
 
             <Accordion variant="separated" radius="md">
-                {(orders || []).map((order: any) => {
-                    if (!order || !order.id) return null;
-
+                {(orders || []).filter((o: any) => o && o.id).map((order: any) => {
+                    const orderId = String(order.id);
                     const bizName = order.users?.business_name || '알 수 없음';
                     const createdAt = order.created_at ? formatKSTDate(order.created_at) : '-';
                     const status = order.status || 'unknown';
@@ -131,7 +130,7 @@ export default function AdminOrdersPage() {
                     const items = order.order_items || [];
 
                     return (
-                        <Accordion.Item key={order.id} value={order.id} mb="sm" bg="white" style={{ border: '1px solid #eee' }}>
+                        <Accordion.Item key={orderId} value={orderId} mb="sm" bg="white" style={{ border: '1px solid #eee' }}>
                             <Accordion.Control>
                                 <Group justify="space-between" pr="md" wrap="nowrap">
                                     <div style={{ flex: 1 }}>
