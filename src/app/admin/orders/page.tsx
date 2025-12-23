@@ -47,21 +47,31 @@ export default function AdminOrdersPage() {
             `)
                 .order('created_at', { ascending: false });
 
+            if (error) {
+                console.error('Supabase fetch error:', error);
+                return;
+            }
+
             if (data) {
-                setOrders(data as any);
-                // Initialize price map with current or base product prices
-                const map: Record<string, number> = {};
-                data.forEach((o: any) => {
-                    if (o && o.order_items) {
-                        o.order_items.forEach((item: any) => {
-                            if (item) {
-                                // Use existing price if set (>0), otherwise product base price
-                                map[item.id] = (item.price_at_moment || 0) > 0 ? item.price_at_moment : (item.products?.price_per_yard || 0);
-                            }
-                        });
-                    }
-                });
-                setPriceMap(map);
+                console.log('Fetched orders data:', JSON.stringify(data, null, 2));
+                try {
+                    setOrders(data as any);
+                    // Initialize price map with current or base product prices
+                    const map: Record<string, number> = {};
+                    data.forEach((o: any) => {
+                        if (o && o.order_items) {
+                            o.order_items.forEach((item: any) => {
+                                if (item) {
+                                    // Use existing price if set (>0), otherwise product base price
+                                    map[item.id] = (item.price_at_moment || 0) > 0 ? item.price_at_moment : (item.products?.price_per_yard || 0);
+                                }
+                            });
+                        }
+                    });
+                    setPriceMap(map);
+                } catch (e) {
+                    console.error('Error initializing price map:', e);
+                }
             }
         }
         fetchOrders();
