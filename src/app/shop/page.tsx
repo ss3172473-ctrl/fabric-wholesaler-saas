@@ -65,23 +65,32 @@ export default function ShopPage() {
     };
 
     const handleCheckout = async () => {
+        if (cart.length === 0) return;
         setLoading(true);
-        const items = cart.map(item => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-            price: 0 // 견적 요청이므로 0원으로 전송 (관리자가 설정)
-        }));
+        try {
+            const items = cart.map(item => ({
+                productId: item.product.id,
+                quantity: item.quantity,
+                price: 0 // 견적 요청이므로 0원으로 전송 (관리자가 설정)
+            }));
 
-        const result = await createOrder(items, orderNote);
-        if (result.success) {
-            alert('주문이 정상적으로 접수되었습니다! (관리자 승인 대기중)');
-            setCart([]);
-            setOrderNote('');
-            close();
-        } else {
-            alert('주문 실패: ' + result.error);
+            console.log("Creating order with:", items);
+            const result = await createOrder(items, orderNote);
+
+            if (result.success) {
+                alert('주문이 정상적으로 접수되었습니다! (관리자 승인 대기중)');
+                setCart([]);
+                setOrderNote('');
+                close();
+            } else {
+                alert('주문 실패: ' + result.error);
+            }
+        } catch (error: any) {
+            console.error("Checkout Error:", error);
+            alert('주문 처리 중 오류가 발생했습니다: ' + (error.message || error));
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const totalAmount = cart.reduce((sum, item) => sum + (item.product.price_per_yard * item.quantity), 0);
