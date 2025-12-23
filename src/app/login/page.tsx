@@ -3,8 +3,10 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
-// ... (SubmitButton code remains same)
+import { TextInput, PasswordInput, Button, Container, Paper, Title, Text, Group, Alert, Box, ThemeIcon } from '@mantine/core';
+import { useFormStatus } from 'react-dom';
 import { login } from './actions';
+import { IconAlertCircle, IconBuildingWarehouse } from '@tabler/icons-react';
 
 function LoginForm() {
     const searchParams = useSearchParams();
