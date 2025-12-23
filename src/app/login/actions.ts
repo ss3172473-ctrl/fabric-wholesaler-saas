@@ -43,6 +43,14 @@ export async function login(formData: FormData) {
             .eq('id', authData.user.id)
             .single();
 
+        // Strict Role Enforcement
+        const expectedRole = formData.get('expectedRole') as string;
+        if (expectedRole && userProfile?.role !== expectedRole) {
+            await supabase.auth.signOut();
+            const roleName = expectedRole === 'admin' ? '판매자' : '구매자';
+            return { error: `로그인 실패: 이 계정은 ${roleName} 로그인 전용이 아닙니다.` };
+        }
+
         if (userProfile?.role === 'admin') {
             redirectPath = '/admin/dashboard';
         }
