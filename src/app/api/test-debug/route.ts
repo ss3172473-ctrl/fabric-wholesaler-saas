@@ -61,6 +61,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, count: data.length });
         }
 
+        // 4. INSPECT USER SCHEMA
+        if (action === 'inspect_user') {
+            const { data, error } = await supabase.from('users').select('*').limit(1);
+            if (error) throw error;
+            return NextResponse.json({ success: true, columns: data.length > 0 ? Object.keys(data[0]) : 'No users found', data: data });
+        }
+
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 
     } catch (e: any) {

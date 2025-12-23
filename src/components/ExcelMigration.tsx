@@ -79,8 +79,14 @@ export function ExcelMigration() {
         <Container size="lg" py="xl">
             <Title order={2} mb="md">Data Migration (Excel Upload)</Title>
             <Text c="dimmed" mb="xl">
-                Upload your existing "Jangbu" files here. The system will parse Dates, Customers, and Items.
+                기존 장부 엑셀 파일을 업로드해주세요. 시스템이 날짜, 거래처, 품목 등을 자동으로 인식합니다.
             </Text>
+
+            <Group mb="lg">
+                <Button component="a" href="/template_migration.xlsx" download color="green" variant="outline" leftSection={<IconFileSpreadsheet size={18} />}>
+                    엑셀 양식 다운로드
+                </Button>
+            </Group>
 
             <Dropzone
                 onDrop={handleDrop}
