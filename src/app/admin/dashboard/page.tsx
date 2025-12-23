@@ -1,9 +1,11 @@
 'use client';
 
-import { Container, Grid, Paper, Text, Title, Group, ThemeIcon, SimpleGrid, Card, Button } from '@mantine/core';
-import { IconBuildingStore, IconUsers, IconShoppingCart, IconReportMoney, IconArrowRight } from '@tabler/icons-react';
+import { useState, useEffect } from 'react';
+import { Container, Grid, Paper, Text, Title, Group, ThemeIcon, SimpleGrid, Card, Button, Badge } from '@mantine/core';
+import { IconBuildingStore, IconUsers, IconShoppingCart, IconReportMoney, IconArrowRight, IconAlertTriangle, IconPackage } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 const features = [
     {
@@ -36,8 +38,7 @@ const features = [
     }
 ];
 
-import { IconBuildingStore, IconUsers, IconShoppingCart, IconReportMoney, IconArrowRight, IconAlertTriangle, IconPackage } from '@tabler/icons-react';
-import { createClient } from '@/utils/supabase/client';
+
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -62,7 +63,7 @@ export default function DashboardPage() {
                 .select('total_price')
                 .gte('created_at', startOfMonth.toISOString())
                 .neq('status', 'cancelled');
-            const sales = (monthlyOrders || []).reduce((sum, o) => sum + (o.total_price || 0), 0);
+            const sales = (monthlyOrders || []).reduce((sum: number, o: any) => sum + (o.total_price || 0), 0);
 
             // 3. Low Stock (Rolls with < 10 yards)
             const { count: lowStockCount } = await supabase.from('inventory_rolls').select('*', { count: 'exact', head: true }).lt('quantity_yards', 10).eq('status', 'active');

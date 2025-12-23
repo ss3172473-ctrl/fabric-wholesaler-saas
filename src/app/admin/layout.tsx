@@ -1,5 +1,19 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { AppShell, Burger, Group, NavLink, Title, Text, Button, Badge } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { useRouter, usePathname } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+import {
+    IconDashboard,
+    IconPackage,
+    IconTruckDelivery,
+    IconUsers,
+    IconFileSpreadsheet,
+    IconLogout,
+    IconBuildingWarehouse
+} from '@tabler/icons-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const [opened, { toggle }] = useDisclosure();
