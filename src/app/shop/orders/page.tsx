@@ -5,6 +5,7 @@ import { Container, Title, Table, Badge, Card, Text, Group, Button, LoadingOverl
 import { createClient } from '@/utils/supabase/client';
 import { IconChevronLeft, IconClock, IconPackage, IconTruck, IconCheck, IconX } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export default function ShopOrdersPage() {
     const supabase = createClient();
@@ -59,6 +60,7 @@ export default function ShopOrdersPage() {
                 <Button variant="subtle" leftSection={<IconChevronLeft size={16} />} onClick={() => router.push('/shop')} color="gray">
                     쇼핑몰로 돌아가기
                 </Button>
+                <NotificationBell />
             </Group>
 
             <Title order={2} mb="lg">내 주문 내역</Title>

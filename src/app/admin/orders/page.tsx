@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Container, Title, Table, Badge, Button, Group, Accordion, Card, Text, NumberInput, LoadingOverlay } from '@mantine/core';
+import { Container, Title, Table, Badge, Button, Group, Accordion, Card, Text, NumberInput, LoadingOverlay, Select } from '@mantine/core';
 import { createClient } from '@/utils/supabase/client';
 import { approveOrder } from './actions';
 
@@ -200,23 +200,37 @@ export default function AdminOrdersPage() {
                                         <Badge color={statusInfo.color}>{statusInfo.label}</Badge>
                                     </Table.Td>
                                     <Table.Td>
-                                        <Group gap="xs">
+                                        <Group gap="xs" wrap="nowrap">
                                             {order.status === 'pending' && (
                                                 <Button size="compact-xs" color="navy" onClick={() => handleApprove(order)}>
-                                                    승인
+                                                    승인(재고차감)
                                                 </Button>
                                             )}
-                                            {order.status === 'approved' && (
-                                                <Button size="compact-xs" color="blue" onClick={() => updateStatus(order.id, 'preparing')}>
-                                                    출고준비
-                                                </Button>
-                                            )}
-                                            {order.status === 'preparing' && (
-                                                <Button size="compact-xs" color="gray" leftSection={<IconTruckDelivery size={14} />} onClick={() => updateStatus(order.id, 'shipped')}>
-                                                    출고완료
-                                                </Button>
-                                            )}
-                                            {order.status !== 'shipped' && order.status !== 'cancelled' && (
+
+                                            <Select
+                                                size="compact-xs"
+                                                w={110}
+                                                placeholder="상태 변경"
+                                                value={order.status}
+                                                data={[
+                                                    { value: 'pending', label: '견적대기' },
+                                                    { value: 'approved', label: '승인완료' },
+                                                    { value: 'preparing', label: '출고준비' },
+                                                    { value: 'shipped', label: '출고완료' },
+                                                    { value: 'cancelled', label: '주문취소' }
+                                                ]}
+                                                onChange={(v) => {
+                                                    if (v && v !== order.status) {
+                                                        if (v === 'approved' && order.status === 'pending') {
+                                                            handleApprove(order);
+                                                        } else {
+                                                            updateStatus(order.id, v);
+                                                        }
+                                                    }
+                                                }}
+                                            />
+
+                                            {order.status !== 'shipped' && order.status !== 'cancelled' && order.status !== 'pending' && (
                                                 <Button size="compact-xs" variant="subtle" color="red" onClick={() => updateStatus(order.id, 'cancelled')}>
                                                     취소
                                                 </Button>

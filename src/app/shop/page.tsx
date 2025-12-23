@@ -6,6 +6,9 @@ import { createClient } from '@/utils/supabase/client';
 import { IconShoppingCart, IconTrash } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { createOrder } from './actions';
+import { NotificationBell } from '@/components/NotificationBell';
+import Link from 'next/link';
+import { IconHistory } from '@tabler/icons-react';
 
 interface Product {
     id: string;
@@ -108,6 +111,10 @@ export default function ShopPage() {
                     <Text c="dimmed" size="sm">원단 재고 확인 및 견적 요청</Text>
                 </div>
                 <Group>
+                    <NotificationBell />
+                    <Button variant="subtle" color="navy" component={Link} href="/shop/orders" leftSection={<IconHistory size={20} />}>
+                        주문 내역
+                    </Button>
                     <Button variant="default" onClick={handleLogout} color="gray">
                         로그아웃
                     </Button>

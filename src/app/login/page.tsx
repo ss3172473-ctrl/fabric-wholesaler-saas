@@ -3,10 +3,13 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
-import { TextInput, PasswordInput, Button, Container, Paper, Title, Text, Group, Alert, Box, ThemeIcon } from '@mantine/core';
+import { TextInput, PasswordInput, Button, Container, Paper, Title, Text, Group, Alert, Box, ThemeIcon, LoadingOverlay } from '@mantine/core';
 import { useFormStatus } from 'react-dom';
 import { login } from './actions';
 import { IconAlertCircle, IconBuildingWarehouse } from '@tabler/icons-react';
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 function SubmitButton({ color }: { color: string }) {
     const { pending } = useFormStatus();
@@ -26,9 +29,28 @@ function SubmitButton({ color }: { color: string }) {
 
 function LoginForm() {
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const supabase = createClient();
     const role = searchParams.get('role') || 'customer';
     const isSeller = role === 'admin';
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [checking, setChecking] = useState(true);
+
+    useEffect(() => {
+        const checkSession = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
+                // If already logged in with the ROLE we are targeting, just go there.
+                if (profile?.role === role) {
+                    router.replace(role === 'admin' ? '/admin/dashboard' : '/shop');
+                    return;
+                }
+            }
+            setChecking(false);
+        };
+        checkSession();
+    }, [role, router, supabase]);
 
     async function handleSubmit(formData: FormData) {
         setErrorMessage(null);
@@ -39,7 +61,8 @@ function LoginForm() {
     }
 
     return (
-        <Container size={420} my={40}>
+        <Container size={420} my={40} style={{ position: 'relative' }}>
+            <LoadingOverlay visible={checking} />
             <Box ta="center" mb={30}>
                 <ThemeIcon size={80} radius={100} color={isSeller ? "gray" : "navy"} variant="filled">
                     <IconBuildingWarehouse size={45} stroke={1.5} />
