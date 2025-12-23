@@ -62,6 +62,7 @@ function LoginForm() {
                         required
                         size="md"
                     />
+                    <input type="hidden" name="expectedRole" value={isSeller ? 'admin' : 'customer'} />
                     <PasswordInput
                         label="비밀번호"
                         name="password"
