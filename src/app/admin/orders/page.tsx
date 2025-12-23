@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Container, Title, Table, Badge, Button, Group, Accordion, Card, Text, Select } from '@mantine/core';
+import { Container, Title, Table, Badge, Button, Group, Accordion, Card, Text, NumberInput, LoadingOverlay } from '@mantine/core';
 import { createClient } from '@/utils/supabase/client';
+import { approveOrder } from './actions';
 
 interface Order {
     id: string;
@@ -21,6 +22,7 @@ interface Order {
         products: {
             name: string;
             color: string;
+            price_per_yard: number;
         }
     }[];
 }
@@ -28,6 +30,8 @@ interface Order {
 export default function AdminOrdersPage() {
     const supabase = createClient();
     const [orders, setOrders] = useState<Order[]>([]);
+    const [priceMap, setPriceMap] = useState<Record<string, number>>({}); // itemId -> price
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         async function fetchOrders() {
@@ -38,12 +42,23 @@ export default function AdminOrdersPage() {
                 users (business_name, phone),
                 order_items (
                     *,
-                    products (name, color)
+                    products (name, color, price_per_yard)
                 )
             `)
                 .order('created_at', { ascending: false });
 
-            if (data) setOrders(data as any);
+            if (data) {
+                setOrders(data as any);
+                // Initialize price map with current or base product prices
+                const map: Record<string, number> = {};
+                data.forEach((o: any) => {
+                    o.order_items.forEach((item: any) => {
+                        // Use existing price if set (>0), otherwise product base price
+                        map[item.id] = item.price_at_moment > 0 ? item.price_at_moment : item.products?.price_per_yard || 0;
+                    });
+                });
+                setPriceMap(map);
+            }
         }
         fetchOrders();
     }, []);
@@ -55,9 +70,31 @@ export default function AdminOrdersPage() {
         }
     };
 
+    const handleApprove = async (order: Order) => {
+        if (!confirm('설정된 단가로 주문을 승인하시겠습니까?')) return;
+        setLoading(true);
+
+        const itemsToUpdate = order.order_items.map(item => ({
+            id: item.id,
+            price: priceMap[item.id] || 0
+        }));
+
+        const result = await approveOrder(order.id, itemsToUpdate);
+
+        if (result?.success) {
+            alert('주문이 승인되었습니다.');
+            // Refresh local state roughly or reload
+            window.location.reload();
+        } else {
+            alert('오류 발생: ' + result?.error);
+        }
+        setLoading(false);
+    };
+
     return (
         <Container size="xl" py="xl">
-            <Title order={2} mb="lg" c="navy.9">주문 관리 (오더 내역)</Title>
+            <LoadingOverlay visible={loading} />
+            <Title order={2} mb="lg" c="navy.9">주문 관리 (견적 승인)</Title>
 
             <Accordion variant="separated" radius="md">
                 {orders.map(order => (
@@ -69,7 +106,9 @@ export default function AdminOrdersPage() {
                                     <Text size="sm" c="dimmed">{new Date(order.created_at).toLocaleString('ko-KR')}</Text>
                                 </div>
                                 <Group>
-                                    <Text fw={700} c="navy.9">{order.total_price.toLocaleString()} 원</Text>
+                                    <Text fw={700} c="navy.9">
+                                        {order.status === 'pending' ? '견적 대기중' : `${order.total_price.toLocaleString()} 원`}
+                                    </Text>
                                     <Badge size="lg" color={
                                         order.status === 'pending' ? 'yellow' :
                                             order.status === 'approved' ? 'teal' : 'gray'
@@ -89,20 +128,37 @@ export default function AdminOrdersPage() {
                                             <Table.Th>상품명</Table.Th>
                                             <Table.Th>색상/패턴</Table.Th>
                                             <Table.Th>주문수량 (야드)</Table.Th>
-                                            <Table.Th>단가</Table.Th>
+                                            <Table.Th style={{ width: 150 }}>확정 단가 (원)</Table.Th>
                                             <Table.Th>합계</Table.Th>
                                         </Table.Tr>
                                     </Table.Thead>
                                     <Table.Tbody>
-                                        {order.order_items.map(item => (
-                                            <Table.Tr key={item.id}>
-                                                <Table.Td>{item.products?.name}</Table.Td>
-                                                <Table.Td>{item.products?.color}</Table.Td>
-                                                <Table.Td>{item.quantity_yards} yds</Table.Td>
-                                                <Table.Td>{item.price_at_moment.toLocaleString()} 원</Table.Td>
-                                                <Table.Td fw={600}>{(item.quantity_yards * item.price_at_moment).toLocaleString()} 원</Table.Td>
-                                            </Table.Tr>
-                                        ))}
+                                        {order.order_items.map(item => {
+                                            const currentPrice = priceMap[item.id] || 0;
+                                            return (
+                                                <Table.Tr key={item.id}>
+                                                    <Table.Td>{item.products?.name}</Table.Td>
+                                                    <Table.Td>{item.products?.color}</Table.Td>
+                                                    <Table.Td>{item.quantity_yards} yds</Table.Td>
+                                                    <Table.Td>
+                                                        {order.status === 'pending' ? (
+                                                            <NumberInput
+                                                                value={currentPrice}
+                                                                onChange={(v) => setPriceMap(prev => ({ ...prev, [item.id]: Number(v) }))}
+                                                                min={0} step={100}
+                                                                hideControls
+                                                                size="xs"
+                                                            />
+                                                        ) : (
+                                                            `${item.price_at_moment.toLocaleString()} 원`
+                                                        )}
+                                                    </Table.Td>
+                                                    <Table.Td fw={600}>
+                                                        {(item.quantity_yards * (order.status === 'pending' ? currentPrice : item.price_at_moment)).toLocaleString()} 원
+                                                    </Table.Td>
+                                                </Table.Tr>
+                                            );
+                                        })}
                                     </Table.Tbody>
                                 </Table>
 
@@ -110,9 +166,9 @@ export default function AdminOrdersPage() {
                                     <Button size="sm" variant="outline" color="red" onClick={() => updateStatus(order.id, 'cancelled')}>
                                         주문 취소
                                     </Button>
-                                    {order.status !== 'approved' && (
-                                        <Button size="sm" color="navy" onClick={() => updateStatus(order.id, 'approved')}>
-                                            ✅ 주문 승인 (재고 할당)
+                                    {order.status === 'pending' && (
+                                        <Button size="sm" color="navy" onClick={() => handleApprove(order)}>
+                                            ✅ 단가 확정 및 승인
                                         </Button>
                                     )}
                                 </Group>

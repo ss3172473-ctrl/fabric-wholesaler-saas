@@ -2,6 +2,7 @@
 
 import { AppShell, Burger, Group, NavLink, Title, Text, Button } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { useEffect } from 'react';
 import { IconPackage, IconUsers, IconFileSpreadsheet, IconDashboard, IconTruckDelivery, IconLogout, IconDatabaseImport, IconBuildingWarehouse } from '@tabler/icons-react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';

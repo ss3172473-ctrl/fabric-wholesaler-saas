@@ -69,7 +69,7 @@ export default function ShopPage() {
         const items = cart.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
-            price: item.product.price_per_yard
+            price: 0 // 견적 요청이므로 0원으로 전송 (관리자가 설정)
         }));
 
         const result = await createOrder(items, orderNote);
@@ -116,7 +116,7 @@ export default function ShopPage() {
                                 <Badge color="gray" variant="light">{product.color}</Badge>
                             </Group>
 
-                            <Text size="sm" c="dimmed">단가: {product.price_per_yard.toLocaleString()} 원 / yd</Text>
+                            <Text size="sm" c="orange.8" fw={600}>단가: 견적문의 (주문 승인 시 확정)</Text>
 
                             <Text size="sm" c={stock > 0 ? "teal" : "red"} fw={600} mt={5}>
                                 {stock > 0 ? `현재 재고: ${stock} yds` : '일시 품절 (입고 예정)'}
@@ -126,7 +126,7 @@ export default function ShopPage() {
                                 disabled={stock === 0 || inCart}
                                 onClick={() => addToCart(product)}
                                 variant={inCart ? "light" : "filled"}>
-                                {inCart ? '장바구니에 담김' : '장바구니 담기'}
+                                {inCart ? '견적함에 담김' : '견적함 담기'}
                             </Button>
                         </Card>
                     );
@@ -134,19 +134,19 @@ export default function ShopPage() {
             </SimpleGrid>
 
             {/* Cart Modal */}
-            <Modal opened={opened} onClose={close} title="주문 장바구니" size="lg" centered>
+            <Modal opened={opened} onClose={close} title="견적 요청 (장바구니)" size="lg" centered>
                 {cart.length === 0 ? (
-                    <Text c="dimmed" ta="center" py="xl">장바구니가 비어있습니다.</Text>
+                    <Text c="dimmed" ta="center" py="xl">견적함이 비어있습니다.</Text>
                 ) : (
                     <>
                         {cart.map(item => (
                             <Group key={item.product.id} mb="sm" justify="space-between" wrap="nowrap" align="center">
                                 <div style={{ flex: 1 }}>
                                     <Text fw={600} c="navy.9">{item.product.name} ({item.product.color})</Text>
-                                    <Text size="xs" c="dimmed">단가: {item.product.price_per_yard.toLocaleString()} 원/yd</Text>
+                                    <Text size="xs" c="dimmed">단가: 별도 협의</Text>
                                 </div>
                                 <NumberInput w={100} value={item.quantity} onChange={(v) => updateQuantity(item.product.id, Number(v))} min={1} suffix=" yds" step={10} />
-                                <Text fw={600} w={100} ta="right">{(item.product.price_per_yard * item.quantity).toLocaleString()} 원</Text>
+                                <Text fw={600} w={100} ta="right" c="dimmed">-</Text>
                                 <ActionIcon color="red" variant="subtle" onClick={() => removeFromCart(item.product.id)}>
                                     <IconTrash size={18} />
                                 </ActionIcon>
@@ -154,15 +154,15 @@ export default function ShopPage() {
                         ))}
 
                         <Group justify="flex-end" mt="xl" pt="md" style={{ borderTop: '2px solid #f1f3f5' }}>
-                            <Text size="lg">예상 주문 합계:</Text>
-                            <Text size="xl" fw={800} c="navy.9">{totalAmount.toLocaleString()} 원</Text>
+                            <Text size="lg">예상 견적 합계:</Text>
+                            <Text size="xl" fw={800} c="orange.8">관리자 승인 후 확정</Text>
                         </Group>
 
                         <Textarea label="주문 메모 / 요청사항" placeholder="배송지 변경이나 기타 요청사항을 입력하세요." mt="md"
                             value={orderNote} onChange={(e) => setOrderNote(e.currentTarget.value)} />
 
                         <Button fullWidth mt="lg" onClick={handleCheckout} loading={loading} size="lg" color="navy">
-                            주문 접수 하기
+                            견적 요청하기
                         </Button>
                     </>
                 )}
