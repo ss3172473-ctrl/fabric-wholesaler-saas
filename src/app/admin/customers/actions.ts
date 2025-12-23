@@ -56,3 +56,24 @@ export async function createCustomer(formData: FormData) {
     revalidatePath('/admin/customers');
     return { success: true };
 }
+
+export async function deleteCustomer(userId: string) {
+    const supabaseAdmin = createAdminClient();
+    try {
+        // 1. Delete from Auth (This usually cascades to public.users if logic exists, but let's be safe)
+        const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+        if (authError) throw authError;
+
+        // 2. Delete from public.users manually if needed (or rely on Cascade)
+        // Explicitly trying to delete user record to ensure cleanup
+        const { error: dbError } = await supabaseAdmin.from('users').delete().eq('id', userId);
+
+        if (dbError) console.error("DB Delete Warning:", dbError.message);
+
+        revalidatePath('/admin/customers');
+        return { success: true };
+    } catch (error: any) {
+        console.error("Delete Customer Error:", error);
+        return { error: error.message };
+    }
+}

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Container, Title, Button, Table, Group, Modal, TextInput, NumberInput, Badge, ActionIcon, Card, Text, Collapse } from '@mantine/core';
+import { Container, Title, Button, Table, Group, Modal, TextInput, NumberInput, Badge, ActionIcon, Card, Text, Collapse, Switch, FileButton, Image } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { createClient } from '@/utils/supabase/client';
-import { IconPlus, IconTrash, IconChevronDown, IconChevronRight } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconChevronDown, IconChevronRight, IconUpload, IconPhoto } from '@tabler/icons-react';
 
 interface Product {
     id: string;
@@ -32,11 +32,13 @@ export default function InventoryPage() {
     const [rollModalOpen, { open: openRollModal, close: closeRollModal }] = useDisclosure(false);
 
     // Form State
-    const [productForm, setProductForm] = useState({ name: '', color: '', price: 0 });
+    const [productForm, setProductForm] = useState({ name: '', color: '', price: 0, imageUrl: '' });
     const [rollForm, setRollForm] = useState({ productId: '', label: '', quantity: 0 });
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
     // UI State
     const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
+    const [manageMode, setManageMode] = useState(false);
 
     const fetchData = useCallback(async () => {
         const { data: pData } = await supabase.from('products').select('*').order('created_at', { ascending: false });
@@ -52,16 +54,38 @@ export default function InventoryPage() {
 
     const handleCreateProduct = async () => {
         setLoading(true);
+        let uploadedImageUrl = '';
+
+        if (imageFile) {
+            const fileExt = imageFile.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const { error: uploadError, data } = await supabase.storage
+                .from('product-images')
+                .upload(fileName, imageFile);
+
+            if (uploadError) {
+                console.error('Upload error:', uploadError);
+                // Continue without image or alert?
+            } else {
+                const { data: { publicUrl } } = supabase.storage
+                    .from('product-images')
+                    .getPublicUrl(fileName);
+                uploadedImageUrl = publicUrl;
+            }
+        }
+
         const { error } = await supabase.from('products').insert({
             name: productForm.name,
             color: productForm.color,
             price_per_yard: productForm.price,
+            image_url: uploadedImageUrl
         });
 
         if (!error) {
             await fetchData();
             closeProductModal();
-            setProductForm({ name: '', color: '', price: 0 });
+            setProductForm({ name: '', color: '', price: 0, imageUrl: '' });
+            setImageFile(null);
         } else {
             alert(error.message);
         }
@@ -93,11 +117,42 @@ export default function InventoryPage() {
         openRollModal();
     };
 
+    const handleDeleteProduct = async (id: string) => {
+        if (!confirm('원단과 포함된 롤을 모두 삭제하시겠습니까?')) return;
+        setLoading(true);
+        // Cascading delete relies on DB FK setup, or manual delete.
+        // Assuming DB Cascade for simplicity or do manual.
+        // Let's do manual to be checking.
+        await supabase.from('inventory_rolls').delete().eq('product_id', id);
+        const { error } = await supabase.from('products').delete().eq('id', id);
+        if (error) alert(error.message);
+        else await fetchData();
+        setLoading(false);
+    }
+
+    const handleDeleteRoll = async (id: string) => {
+        if (!confirm('이 롤을 삭제하시겠습니까?')) return;
+        setLoading(true);
+        const { error } = await supabase.from('inventory_rolls').delete().eq('id', id);
+        if (error) alert(error.message);
+        else await fetchData();
+        setLoading(false);
+    }
+
     return (
         <Container size="xl" py="xl">
             <Group justify="space-between" mb="lg">
                 <Title order={2} c="navy.9">재고 관리 (원단 & 롤)</Title>
-                <Button onClick={openProductModal} leftSection={<IconPlus size={16} />} color="navy">신규 원단 등록</Button>
+                <Group>
+                    <Switch
+                        label="관리 모드 (삭제/편집)"
+                        checked={manageMode}
+                        onChange={(event) => setManageMode(event.currentTarget.checked)}
+                        color="red"
+                        size="md"
+                    />
+                    <Button onClick={openProductModal} leftSection={<IconPlus size={16} />} color="navy">신규 원단 등록</Button>
+                </Group>
             </Group>
 
             <Card withBorder radius="md" p="md" shadow="sm">
@@ -136,9 +191,15 @@ export default function InventoryPage() {
                                             <Text span size="xs" c="dimmed" ml="xs">({productRolls.length} 롤)</Text>
                                         </Table.Td>
                                         <Table.Td style={{ textAlign: 'right' }}>
-                                            <Button size="xs" variant="outline" color="navy" onClick={() => openAddRoll(p.id)}>
-                                                + 롤 입고
-                                            </Button>
+                                            {manageMode ? (
+                                                <Button size="xs" color="red" variant="subtle" onClick={() => handleDeleteProduct(p.id)}>
+                                                    <IconTrash size={16} /> 삭제
+                                                </Button>
+                                            ) : (
+                                                <Button size="xs" variant="outline" color="navy" onClick={() => openAddRoll(p.id)}>
+                                                    + 롤 입고
+                                                </Button>
+                                            )}
                                         </Table.Td>
                                     </Table.Tr>
 
@@ -158,6 +219,15 @@ export default function InventoryPage() {
                                                                     <Badge size="xs" color={roll.status === 'active' ? 'teal' : 'gray'} mt={5} variant="dot">
                                                                         {roll.status === 'active' ? '판매가능' : '소진됨'}
                                                                     </Badge>
+                                                                    {manageMode && (
+                                                                        <ActionIcon
+                                                                            color="red" variant="filled" size="xs"
+                                                                            style={{ position: 'absolute', top: 0, right: 0, borderRadius: '0 0 0 4px', zIndex: 10 }}
+                                                                            onClick={() => handleDeleteRoll(roll.id)}
+                                                                        >
+                                                                            <IconTrash size={10} />
+                                                                        </ActionIcon>
+                                                                    )}
                                                                 </Card>
                                                             ))}
                                                         </Group>
@@ -181,6 +251,17 @@ export default function InventoryPage() {
                     value={productForm.color} onChange={(e) => setProductForm({ ...productForm, color: e.currentTarget.value })} />
                 <NumberInput label="단가 (1야드 기준)" required mb="lg" suffix=" 원" hideControls
                     value={productForm.price} onChange={(v) => setProductForm({ ...productForm, price: Number(v) })} />
+
+                <Group mb="lg" align="flex-end">
+                    <FileButton onChange={setImageFile} accept="image/png,image/jpeg">
+                        {(props) => <Button {...props} variant="default" leftSection={<IconPhoto size={16} />}>이미지 선택</Button>}
+                    </FileButton>
+                    {imageFile && (
+                        <Text size="sm" c="dimmed">
+                            {imageFile.name}
+                        </Text>
+                    )}
+                </Group>
                 <Button fullWidth onClick={handleCreateProduct} loading={loading} color="navy">원단 저장</Button>
             </Modal>
 

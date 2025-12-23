@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { Container, Title, Button, Table, Group, Modal, TextInput, PasswordInput, Badge } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { createClient } from '@/utils/supabase/client';
-import { createCustomer } from './actions';
-import { IconPlus } from '@tabler/icons-react';
+import { createCustomer, deleteCustomer } from './actions';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { ActionIcon } from '@mantine/core';
 
 interface User {
     id: string;
@@ -49,6 +50,19 @@ export default function CustomersPage() {
         setLoading(false);
     }
 
+    async function handleDelete(id: string, name: string) {
+        if (!confirm(`${name} 업체를 정말 삭제하시겠습니까? (되돌릴 수 없습니다)`)) return;
+
+        setLoading(true);
+        const result = await deleteCustomer(id);
+        if (result?.error) {
+            alert(result.error);
+        } else {
+            await fetchCustomers(); // Refresh list
+        }
+        setLoading(false);
+    }
+
     return (
         <Container size="xl" py="xl">
             <Group justify="space-between" mb="lg">
@@ -76,7 +90,12 @@ export default function CustomersPage() {
                                 </span>
                             </Table.Td>
                             <Table.Td>
-                                <Badge color="blue" variant="light">승인됨</Badge>
+                                <Group gap="xs">
+                                    <Badge color="blue" variant="light">승인됨</Badge>
+                                    <ActionIcon variant="light" color="red" onClick={() => handleDelete(c.id, c.business_name)}>
+                                        <IconTrash size={16} />
+                                    </ActionIcon>
+                                </Group>
                             </Table.Td>
                         </Table.Tr>
                     ))}
