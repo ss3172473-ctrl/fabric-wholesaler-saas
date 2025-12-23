@@ -18,12 +18,12 @@ export default function Home() {
                         실시간 재고 파악부터 월말 정산까지 자동으로 처리됩니다.
                     </Text>
 
-                    <Group justify="center" mt="xl">
-                        <Button component={Link} href="/login" size="xl" color="navy" leftSection={<IconLogin />}>
-                            파트너스 로그인
+                    <Group justify="center" mt="xl" grow>
+                        <Button component={Link} href="/login?role=customer" size="xl" color="navy" leftSection={<IconLogin />} variant="filled">
+                            구매자(거래처) 로그인
                         </Button>
-                        <Button component={Link} href="/admin/migration" size="xl" variant="light" color="gray" leftSection={<IconDatabaseImport />}>
-                            관리자 데이터 업로드
+                        <Button component={Link} href="/login?role=admin" size="xl" color="gray" leftSection={<IconBuildingWarehouse />} variant="outline">
+                            판매자(관리자) 로그인
                         </Button>
                     </Group>
                 </Box>

@@ -86,15 +86,28 @@ export default function ShopPage() {
 
     const totalAmount = cart.reduce((sum, item) => sum + (item.product.price_per_yard * item.quantity), 0);
 
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/login?role=customer';
+    };
+
     return (
         <Container size="xl" py="xl">
             <Group justify="space-between" mb="xl">
-                <Title order={2} c="navy.9">원단 주문 (쇼핑몰)</Title>
-                <Indicator label={cart.length} size={16} disabled={cart.length === 0} color="red">
-                    <Button variant="outline" color="navy" onClick={open} leftSection={<IconShoppingCart size={20} />}>
-                        장바구니 보기
+                <div>
+                    <Title order={2} c="navy.9">원단 주문 (쇼핑몰)</Title>
+                    <Text c="dimmed" size="sm">원단 재고 확인 및 견적 요청</Text>
+                </div>
+                <Group>
+                    <Button variant="default" onClick={handleLogout} color="gray">
+                        로그아웃
                     </Button>
-                </Indicator>
+                    <Indicator label={cart.length} size={16} disabled={cart.length === 0} color="red">
+                        <Button variant="outline" color="navy" onClick={open} leftSection={<IconShoppingCart size={20} />}>
+                            견적함 보기
+                        </Button>
+                    </Indicator>
+                </Group>
             </Group>
 
             <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }}>
